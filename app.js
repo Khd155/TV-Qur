@@ -321,8 +321,14 @@ function fmt12(d){
   return {time:String(h12).padStart(2,'0')+':'+m+':'+s, period:per};
 }
 
+/* ---- الوقت الحالي بتوقيت مكة المكرمة (UTC+3) ---- */
+/* يضمن صحة العمل حتى لو ضبط الجهاز على توقيت مختلف */
+function nowSA(){
+  return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Riyadh'}));
+}
+
 function updateClock(){
-  const now=new Date(), c=fmt12(now);
+  const now=nowSA(), c=fmt12(now);   // توقيت مكة دائماً بغض النظر عن ضبط الجهاز
   const set=(id,v)=>{const e=g(id);if(e)e.textContent=v;};
   set('currentTime',c.time); set('currentPeriod',c.period);
   set('silentTime',c.time+' '+c.period);
@@ -333,7 +339,7 @@ function updateClock(){
 
 /* ---- التاريخ ---- */
 function updateDate(){
-  const now=new Date();
+  const now=nowSA();   // التاريخ بتوقيت مكة
   // اسم اليوم مرة واحدة فقط
   try{
     const dayFmt=new Intl.DateTimeFormat('ar',{weekday:'long'});
@@ -354,7 +360,7 @@ function updateDate(){
 
 /* ---- مواقيت الصلاة (محلي - UTC+3) ---- */
 function updatePrayerLocal(){
-  const now=new Date();
+  const now=nowSA();   // التاريخ بتوقيت مكة — يحل مشكلة الجهاز بتوقيت مختلف
   const times=PrayTimes.getTimes(now,C.latitude,C.longitude,3);
   pTimes={fajr:times.fajr,dhuhr:times.dhuhr,asr:times.asr,maghrib:times.maghrib,isha:times.isha};
   pRaw=times._raw;
@@ -1090,10 +1096,13 @@ function startWatchdog(){
 // لا تعيد تحميل الصفحة على كل خطأ — فقط سجّل في الكنسول
 window.onerror=(msg,src,line,col,err)=>{console.warn('[onerror]',msg,src,line);return true;};
 
-/* ---- منتصف الليل ---- */
+/* ---- منتصف الليل (بتوقيت مكة) ---- */
 function scheduleMidnight(){
-  const now=new Date(),mn=new Date(now);mn.setHours(24,0,5,0);
-  setTimeout(async()=>{updateDate();const ok=await tryAPI();if(!ok)updatePrayerLocal();fetchTemp();scheduleMidnight();},mn-now);
+  const now=nowSA();
+  // ثواني حتى منتصف ليل مكة
+  const secsPast=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  const msLeft=(86400-secsPast)*1000+5000;   // +5 ثوان هامش
+  setTimeout(async()=>{updateDate();const ok=await tryAPI();if(!ok)updatePrayerLocal();fetchTemp();scheduleMidnight();},msLeft);
 }
 
 /* ---- فول سكرين ---- */
