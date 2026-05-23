@@ -333,10 +333,9 @@ function fmt12(d){
   return {time:String(h12).padStart(2,'0')+':'+m+':'+s, period:per};
 }
 
-/* ---- الوقت الحالي بتوقيت مكة المكرمة (UTC+3) ---- */
-/* يضمن صحة العمل حتى لو ضبط الجهاز على توقيت مختلف */
+/* ---- الوقت الحالي من الجهاز مباشرة ---- */
 function nowSA(){
-  return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Riyadh'}));
+  return new Date();
 }
 
 function updateClock(){
