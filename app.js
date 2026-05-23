@@ -26,7 +26,7 @@ const DHIKR_LIST=[
 
 /* ---- الإعدادات الافتراضية ---- */
 const DEF={
-  latitude:21.3964, longitude:39.8838,
+  latitude:21.4170, longitude:39.8770,
   locationPreset:'mina',
   orgNameAr:'شركة قريش المحدودة', orgNameEn:'Quraish Company Limited',
   prayerNames:{fajr:'الفجر',dhuhr:'الظهر',asr:'العصر',maghrib:'المغرب',isha:'العشاء'},
@@ -1046,7 +1046,7 @@ function readUI(){
   C.orgNameAr=gv('orgNameAr'); C.orgNameEn=gv('orgNameEn');
   C.locationPreset=gv('locationPreset');
   /* مكة ومنى وعرفة تستخدمان الإحداثيات الفعلية للموقع لضمان دقة المواقيت */
-  const LOCS={makkah:{lat:21.3964,lng:39.8838},mina:{lat:21.3964,lng:39.8838},arafat:{lat:21.3964,lng:39.8838},jeddah:{lat:21.5433,lng:39.1728},riyadh:{lat:24.7136,lng:46.6753}};
+  const LOCS={makkah:{lat:21.4170,lng:39.8770},mina:{lat:21.4170,lng:39.8770},arafat:{lat:21.4170,lng:39.8770},jeddah:{lat:21.5433,lng:39.1728},riyadh:{lat:24.7136,lng:46.6753}};
   if(LOCS[C.locationPreset]){C.latitude=LOCS[C.locationPreset].lat;C.longitude=LOCS[C.locationPreset].lng;}
   else{C.latitude=parseFloat(gv('customLat'))||C.latitude;C.longitude=parseFloat(gv('customLng'))||C.longitude;}
   C.iqamahCountdownMinutes=parseInt(gv('iqamahCountdownMinutes'))||10;
