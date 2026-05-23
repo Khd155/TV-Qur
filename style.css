@@ -1,0 +1,625 @@
+/* ================================================
+   نظام مواقيت الصلاة - شركة قريش
+   تصميم نظيف لشاشات العرض
+   ================================================ */
+:root {
+  --logo-scale: 0.85;     /* حجم الشعار — يتحكم به slider الإعدادات */
+  --card-name-size: 4vmin; /* حجم خط أسماء الصلوات */
+  /* ألوان هوية شركة قريش */
+  --gold:      #C4A882;   /* البيج/ذهبي من شريط الشعار */
+  --gold-lt:   #D4BCA0;   /* بيج فاتح */
+  --gold-dk:   #9A7850;   /* بيج غامق */
+  --purple:    #3D2B8E;   /* البنفسجي الأساسي */
+  --purple-lt: #9B8EC4;   /* بنفسجي فاتح */
+  --purple-md: #6B55B8;   /* بنفسجي متوسط */
+  --bg:        #08061A;   /* خلفية بنفسجية داكنة جداً */
+  --bg2:       #0E0A24;   /* خلفية ثانوية */
+  --card:      rgba(61,43,142,0.12);  /* كروت بتلوين بنفسجي */
+  --border:    rgba(196,168,130,0.2); /* حدود بيج */
+  --text:    #ede8d8;
+  --muted:   rgba(237,232,216,0.55);
+  --r:       12px;
+  --font:    'Cairo', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); cursor: none; }
+
+/* ===== إخفاء الأزرار تلقائياً ===== */
+.cfg-btn { transition: opacity 0.7s ease; }
+body.ui-hidden .cfg-btn { opacity: 0 !important; pointer-events: none; }
+
+/* ===== خلفية ===== */
+.bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 25% 15%, #1E0A50 0%, var(--bg) 55%); }
+.bg-geo { position: fixed; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+.bg-vign { position: fixed; inset: 0; z-index: 2; background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.6) 100%); pointer-events: none; }
+
+/* زوايا زخرفية */
+.corner { position: fixed; z-index: 3; width: clamp(40px,6vmin,80px); height: clamp(40px,6vmin,80px); pointer-events: none; opacity: 0.35; }
+.corner::before, .corner::after { content: ''; position: absolute; background: var(--gold); }
+.corner::before { width: 100%; height: 1.5px; }
+.corner::after  { width: 1.5px; height: 100%; }
+.c-tr { top: 14px; right: 14px; }
+.c-tr::before { top: 0; right: 0; }
+.c-tr::after  { top: 0; right: 0; }
+.c-tl { top: 14px; left: 14px; }
+.c-tl::before { top: 0; left: 0; }
+.c-tl::after  { top: 0; left: 0; }
+.c-br { bottom: 14px; right: 14px; }
+.c-br::before { bottom: 0; right: 0; }
+.c-br::after  { bottom: 0; right: 0; }
+.c-bl { bottom: 14px; left: 14px; }
+.c-bl::before { bottom: 0; left: 0; }
+.c-bl::after  { bottom: 0; left: 0; }
+
+/* ===== الصفحات والطبقات ===== */
+.page { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; }
+.page.show { display: flex; }
+.fullscr { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; }
+.fullscr.show { display: flex; }
+
+/* ===== الهيدر ===== */
+.hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20vh;
+  padding: 0 2.5vw;
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 11;
+  position: relative;
+  overflow: hidden;
+}
+/* الشعار يسار */
+.hdr-logo {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 1.5vh 0;
+}
+/* التاريخ — وسط الشاشة بالضبط */
+.hdr-date {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  gap: 0.4vh;
+  pointer-events: none;
+}
+/* الموقع يمين */
+.hdr-loc { display: flex; align-items: center; gap: 0.8vw; color: var(--muted); flex-shrink: 0; }
+
+.logo-img {
+  height: calc(var(--logo-scale) * 17vh);
+  width: auto;
+  border-radius: 8px;
+  display: block;
+  background: #ffffff;
+  padding: 4px 8px;
+}
+
+/* البسملة */
+.bism-hdr { display: flex; align-items: center; justify-content: center; gap: 1vw; }
+.bism-hdr .bism-txt { font-family: 'Amiri', serif; font-size: 3.2vmin; color: var(--gold-lt); white-space: nowrap; }
+.bism-hdr .bism-orn { color: var(--gold-dk); font-size: 2.8vmin; }
+
+/* سطر اليوم + التاريخ (سطر واحد) */
+.d-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1.2vw; flex-wrap: nowrap;
+}
+.d-day   { font-size: 3.2vmin; font-weight: 900; color: var(--gold); white-space: nowrap; }
+.d-hijri { font-size: 2.8vmin; font-weight: 700; color: var(--text); white-space: nowrap; }
+.d-sep   { color: var(--gold-dk); font-size: 2.2vmin; }
+.d-greg  { font-size: 2.6vmin; color: var(--muted); white-space: nowrap; }
+
+.loc-svg  { width: clamp(18px,2.5vmin,32px); height: clamp(18px,2.5vmin,32px); color: var(--gold); flex-shrink: 0; }
+.loc-name { font-size: clamp(17px,2.4vmin,34px); font-weight: 700; color: var(--text); }
+.loc-sub  { font-size: clamp(11px,1.4vmin,18px); color: var(--muted); }
+.loc-temp { font-size: clamp(12px,1.6vmin,22px); color: var(--gold); font-weight: 600; margin-top: 1px; }
+
+/* ===== البسملة (العمود الأيمن — قديم، محتفظ للتوافق) ===== */
+.bism {
+  display: flex; align-items: center; justify-content: center; gap: 1.5vw;
+  padding: 0.6vh 0; flex-shrink: 0;
+}
+.bism-txt { font-family: 'Amiri', serif; font-size: clamp(16px,2.4vmin,34px); color: var(--gold); }
+.bism-orn { color: var(--gold-dk); font-size: clamp(14px,2vmin,26px); }
+
+/* ===== المحتوى (unused - kept for compat) ===== */
+
+/* ===== ساعة + درجة الحرارة ===== */
+.clock-wrap {
+  display: flex; align-items: center; justify-content: center;
+  gap: 3vw; flex-shrink: 0; flex-direction: row;
+}
+.clock { display: flex; align-items: baseline; justify-content: center; gap: 1.5vw; flex-shrink: 0; }
+.clk-time { font-size: clamp(38px, 7.5vh, 82px); font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; line-height: 1; }
+.clk-per  { font-size: clamp(13px,2vmin,26px); color: var(--gold); font-weight: 700; }
+
+/* ===== التخطيط الرئيسي: عمودين ===== */
+.two-col {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-template-rows: 1fr;      /* الصف يملأ ارتفاع الحاوية كاملاً */
+  min-height: 0;
+  overflow: hidden;
+}
+/* إخفاء لوحة يوتيوب → المواقيت تأخذ 100% */
+.two-col.no-media {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.two-col.no-media .col-left {
+  display: none;
+}
+
+/* ====== العمود الأيسر: مشغّل المحتوى ====== */
+.col-left {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border-left: 1px solid rgba(196,168,130,0.12);
+  min-height: 0; overflow: hidden;
+  padding: 0.8vh 1vw;
+  background: transparent; /* نفس خلفية الموقع */
+}
+
+/* ===== منطقة المحتوى (يوتيوب) ===== */
+.media-zone {
+  width: 100%;
+  aspect-ratio: 16 / 9;   /* الحاوية 16:9 بالضبط → لا سواد ولا قص */
+  max-height: 100%;        /* لا تتجاوز ارتفاع العمود */
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent; /* نفس خلفية الموقع */
+  flex-shrink: 0;
+  position: relative;      /* لتمركز .media-empty بشكل صحيح */
+}
+.media-aspect {
+  width: 100%;
+  height: 100%;
+}
+.media-aspect iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  /* pointer-events مفعّلة حتى يتمكن مشغّل YouTube من التهيئة والتشغيل */
+}
+.media-empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1.5vh; color: rgba(196,168,130,0.3);
+  font-size: clamp(11px,1.4vmin,18px); text-align: center;
+  padding: 2vw;
+}
+.media-empty svg { width: clamp(40px,6vmin,72px); height: clamp(40px,6vmin,72px); }
+.media-empty-sub { font-size: clamp(9px,1.1vmin,14px); color: rgba(255,255,255,0.2); }
+
+/* ====== العمود الأيمن: الساعة + المواقيت ====== */
+.col-right {
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 0.6vh 1.5vw;
+  gap: 0.5vh;
+  height: 100%; min-height: 0; overflow: hidden;
+}
+.col-right .clock { display: flex; align-items: baseline; justify-content: center; gap: 1vw; flex-shrink: 0; }
+.col-right .next-bar { width: 100%; flex-shrink: 0; }
+.col-right .cards    { width: 100%; flex: 1; min-height: 0; }
+/* الآية انتقلت خارج col-right — لا نحتاج هذا الضبط */
+
+/* ===== قائمة المحتوى في الإعدادات ===== */
+.media-list-ui {
+  display: flex; flex-direction: column; gap: .6vh;
+  max-height: 28vh; overflow-y: auto;
+  margin-bottom: .5vh;
+  padding-left: 2px;
+}
+.mi-card {
+  display: flex; align-items: center; gap: 1vw;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(196,168,130,.14);
+  border-radius: 9px; padding: .7vh 1vw;
+  transition: opacity .2s;
+}
+.mi-card.mi-disabled { opacity: .45; }
+.mi-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2vh; }
+.mi-label { font-size: clamp(12px,1.5vmin,18px); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mi-meta  { font-size: clamp(10px,1.1vmin,14px); color: var(--muted); }
+.mi-empty { color: var(--muted); padding: 1.5vh; text-align: center; font-size: clamp(12px,1.4vmin,17px); }
+.mi-count-badge { font-size: .8em; color: var(--muted); font-weight: 400; }
+
+/* toggle switch */
+.mi-toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+.mi-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.mi-toggle-track {
+  width: 36px; height: 20px; background: rgba(255,255,255,.12);
+  border-radius: 20px; transition: background .25s;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.mi-toggle-track::after {
+  content:''; position: absolute; top: 3px; right: 3px;
+  width: 14px; height: 14px; background: rgba(255,255,255,.5);
+  border-radius: 50%; transition: transform .25s, background .25s;
+}
+.mi-toggle input:checked ~ .mi-toggle-track { background: rgba(196,168,130,.5); }
+.mi-toggle input:checked ~ .mi-toggle-track::after { transform: translateX(-16px); background: var(--gold); }
+
+.mi-play { width: auto !important; padding: .4vh .9vw !important; font-size: clamp(11px,1.2vmin,15px) !important; flex-shrink: 0; }
+.mi-del  { width: auto !important; padding: .4vh .9vw !important; font-size: clamp(11px,1.2vmin,15px) !important; flex-shrink: 0; }
+
+/* شريط الصلاة القادمة */
+.next-bar {
+  display: flex; align-items: center; justify-content: center; gap: 1.2vw;
+  background: rgba(196,168,130,0.07); border: 1px solid rgba(196,168,130,0.18);
+  border-radius: 50px; padding: 0.5vh 2vw; flex-shrink: 0;
+}
+.nb-lbl  { font-size: clamp(11px,1.5vmin,20px); color: var(--muted); }
+.nb-name { font-size: clamp(13px,1.9vmin,26px); font-weight: 800; color: var(--gold); }
+.nb-dot  { color: var(--gold-dk); }
+.nb-cd   { font-size: clamp(12px,1.7vmin,24px); color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* إخفاء عناصر قديمة */
+.upper-area  { display: none !important; }
+.bottom-area { display: none !important; }
+.content     { display: none !important; }
+.cs-stream   { display: none !important; }
+.clock-section { display: none !important; }
+
+/* ===== البطاقات ===== */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0.5vw;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.5vmin; padding: 1vmin 0.8vmin;
+  min-height: 0; overflow: hidden;
+  transition: background .3s, border-color .3s, transform .3s;
+  position: relative;
+}
+
+/* بطاقة الشروق — نفس ألوان باقي البطاقات */
+.card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px; background: var(--gold);
+  transform: scaleX(0); transition: transform .3s; border-radius: 0 0 var(--r) var(--r);
+}
+.card.active { background: rgba(61,43,142,0.3); border-color: rgba(155,142,196,0.7); transform: translateY(-3px); }
+.card.active::after { transform: scaleX(1); }
+.card.next-up { border-color: rgba(155,142,196,0.4); }
+.card.pre-alert { border-color: rgba(230,126,34,0.55); background: rgba(230,126,34,0.07); }
+
+.card-ico {
+  width: 2.5vmin;
+  height: 2.5vmin;
+  min-width: 14px; min-height: 14px;
+  flex-shrink: 0;
+}
+.card-ico svg { width: 100%; height: 100%; }
+.card-name {
+  font-size: var(--card-name-size);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.2;
+}
+.card-time {
+  font-size: 2.8vmin;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.1;
+}
+.card-iq {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5vmin;
+  color: var(--muted);
+  gap: 0.5vmin;
+  flex-wrap: nowrap;
+}
+.card-iq span:first-child { opacity: 0.75; }
+.card-iq span:last-child  { color: var(--gold-lt); font-weight: 700; }
+
+/* ===== آية ===== */
+.verse {
+  display: flex; align-items: center; justify-content: center; gap: 1vw;
+  flex-shrink: 0;                        /* لا يُضغط — حجمه ثابت */
+  padding: 0.5vh 2vw;
+  direction: rtl;
+  border-top: 1px solid rgba(196,168,130,0.12);
+  background: rgba(0,0,0,0.25);
+}
+.v-br  { font-family: 'Amiri', serif; font-size: clamp(16px,2.4vmin,34px); color: var(--gold-dk); }
+.v-txt { font-family: 'Amiri', serif; font-size: clamp(13px,1.9vmin,28px); color: var(--gold-lt); }
+.v-ref { font-size: clamp(10px,1.3vmin,17px); color: var(--muted); }
+
+
+/* ===== الفوتر ===== */
+.ftr {
+  height: clamp(28px,3.8vh,48px);
+  background: rgba(0,0,0,0.5);
+  border-top: 1px solid rgba(196,168,130,0.1);
+  overflow: hidden; display: flex; align-items: center; flex-shrink: 0;
+}
+.ticker { width: 100%; overflow: hidden; display: flex; align-items: center; direction: ltr; }
+/* الحاوية المتحركة تُضاف بـ JS وتحمل النسختين */
+.tk-inner {
+  display: inline-flex; gap: 3vw; white-space: nowrap;
+  font-size: clamp(11px,1.5vmin,20px); color: var(--muted);
+  flex-shrink: 0; direction: rtl; padding-right: 3vw;
+}
+.tk-sep { color: var(--gold-dk); }
+
+/* ===== تنبيه قبل الأذان ===== */
+.overlay-top {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding-top: 1.5vh; pointer-events: none;
+}
+.pa-box {
+  display: flex; align-items: center; gap: 1.2vw;
+  background: linear-gradient(135deg,rgba(224,122,28,.94),rgba(240,168,20,.94));
+  border: 2px solid rgba(255,210,60,.45);
+  border-radius: 50px; padding: 1vh 3.5vw;
+  box-shadow: 0 4px 26px rgba(230,126,34,.44);
+  animation: slideIn .4s ease;
+}
+@keyframes slideIn { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
+.pa-pulse { width:12px;height:12px;border-radius:50%;background:#fff;animation:pp 1s ease-in-out infinite;flex-shrink:0; }
+@keyframes pp { 0%,100%{transform:scale(1)} 50%{transform:scale(1.5);opacity:.5} }
+.pa-txt { font-size: clamp(16px,2.4vmin,32px); font-weight: 700; color: #fff; }
+
+/* ===== شاشة الأذان ===== */
+.adhan-scr { background: radial-gradient(ellipse at center,#0d2a15,#030a06); flex-direction:column; text-align:center; animation: fz .5s ease; }
+@keyframes fz { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:scale(1)} }
+.adhan-glow { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:65vmin;height:65vmin;background:radial-gradient(circle,rgba(46,204,113,.12),transparent 70%);pointer-events:none; }
+.adhan-body { position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2.5vh; }
+.adhan-ico  { font-size:clamp(56px,11vmin,120px);animation:mf 2.5s ease-in-out infinite; }
+@keyframes mf { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+.adhan-lbl  { font-size:clamp(20px,3.2vmin,48px);color:rgba(255,255,255,.8); }
+.adhan-name { font-size:clamp(56px,11vmin,140px);font-weight:900;color:#2ecc71;text-shadow:0 0 40px rgba(46,204,113,.5); }
+.adhan-sub  { font-family:'Amiri',serif;font-size:clamp(18px,2.8vmin,42px);color:var(--gold);animation:tb 3s ease-in-out infinite; }
+.adhan-dua  { font-family:'Amiri',serif;font-size:clamp(14px,2vmin,30px);color:rgba(255,255,255,.75);line-height:1.9;max-width:70vw;text-align:center;margin-top:1vh; }
+@keyframes tb { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+/* ===== عداد الإقامة ===== */
+.iqamah-scr { background:radial-gradient(ellipse at center,#0a0a28,#040408);flex-direction:column; }
+.iq-body { display:flex;flex-direction:column;align-items:center;gap:2.5vh;text-align:center; }
+.iq-name  { font-size:clamp(48px,9.5vmin,120px);font-weight:900;color:#3498db;text-shadow:0 0 36px rgba(52,152,219,.48); }
+.iq-lbl   { font-size:clamp(18px,2.8vmin,42px);color:rgba(255,255,255,.65); }
+.iq-timer { font-size:clamp(76px,17vmin,220px);font-weight:900;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 55px rgba(52,152,219,.38);line-height:1;animation:tp 1s ease-in-out infinite; }
+@keyframes tp { 0%,100%{opacity:1} 50%{opacity:.82} }
+.iq-clk   { font-size:clamp(22px,3.8vmin,52px);color:rgba(255,255,255,.42); }
+
+/* ===== شاشة الصلاة الصامتة ===== */
+.silent-scr { background:#000;flex-direction:column; }
+.sl-body { display:flex;flex-direction:column;align-items:center;gap:2vh;opacity:.2; }
+.sl-time { font-size:clamp(34px,7vmin,96px);color:#fff;font-weight:300;font-variant-numeric:tabular-nums; }
+.sl-lbl  { font-size:clamp(13px,2vmin,30px);color:rgba(255,255,255,.6);letter-spacing:.12em; }
+
+/* ===== شاشة الأذكار ===== */
+.dhikr-scr { background:radial-gradient(ellipse at center,#140e22,#060308);flex-direction:column;padding:3vh 4vw; }
+.dk-body { width:100%;max-width:1300px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:2vh; }
+.dk-top  { display:flex;align-items:center;justify-content:space-between;flex-shrink:0; }
+.dk-head { font-size:clamp(18px,2.8vmin,40px);color:var(--gold);font-weight:700; }
+.dk-cnt  { background:rgba(196,168,130,.12);border:1px solid rgba(196,168,130,.25);border-radius:50px;padding:.5vh 2vw;font-size:clamp(14px,2vmin,28px);color:var(--gold-lt);font-weight:600; }
+.dk-card { flex:1;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:14px;padding:4vh 5vw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2.5vh;overflow:hidden; }
+.dk-title { font-size:clamp(16px,2.6vmin,38px);color:var(--gold);font-weight:700;font-family:'Amiri',serif;min-height:1em; }
+.dk-text  { font-size:clamp(22px,4vmin,62px);color:var(--text);font-family:'Amiri',serif;line-height:2; }
+.dk-sub   { font-size:clamp(12px,1.7vmin,24px);color:var(--gold-lt);opacity:.65;font-family:'Amiri',serif; }
+.dk-rep   { font-size:clamp(14px,1.9vmin,28px);color:#5db3e8;background:rgba(52,152,219,.1);border:1px solid rgba(52,152,219,.25);border-radius:50px;padding:.7vh 2.5vw;font-weight:600;min-height:1em; }
+.dk-bar   { height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;flex-shrink:0; }
+.dk-prog  { height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));border-radius:3px;width:100%; }
+
+/* ===== زر الإعدادات ===== */
+.cfg-btn {
+  position:fixed;bottom:5vh;left:1.8vw;z-index:90;
+  width:clamp(36px,5vmin,58px);height:clamp(36px,5vmin,58px);
+  background:rgba(196,168,130,.1);border:1px solid rgba(196,168,130,.22);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;opacity:.35;transition:opacity .2s;
+}
+.cfg-btn:hover{opacity:1;}
+.cfg-btn svg{width:55%;height:55%;fill:var(--gold);}
+
+/* ===== لوحة الإعدادات ===== */
+.cfg-panel {
+  position:fixed;inset:0;z-index:100;
+  background:rgba(4,8,18,.97);backdrop-filter:blur(16px);
+  flex-direction:column;font-size:clamp(12px,1.6vmin,20px);
+}
+.cfg-panel[style*="display:none"]{display:none!important;}
+.cfg-panel:not([style*="display:none"]){display:flex;}
+
+.cfg-hdr{display:flex;align-items:center;justify-content:space-between;padding:1.8vh 3vw;border-bottom:1px solid rgba(196,168,130,.12);}
+.cfg-hdr h2{color:var(--gold);font-size:clamp(16px,2.4vmin,32px);font-weight:700;}
+.cfg-x{width:clamp(30px,4vmin,48px);height:clamp(30px,4vmin,48px);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:50%;color:rgba(255,255,255,.7);font-size:clamp(16px,2.4vmin,32px);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.cfg-x:hover{background:rgba(255,50,50,.2);color:#ff7070;}
+
+.cfg-tabs{display:flex;flex-wrap:wrap;gap:.5vw;padding:1vh 2.5vw;border-bottom:1px solid rgba(196,168,130,.1);background:rgba(0,0,0,.2);}
+.tab{padding:.6vh 1.4vw;background:transparent;border:1px solid rgba(196,168,130,.16);border-radius:6px;color:rgba(255,255,255,.5);font-family:var(--font);font-size:clamp(11px,1.3vmin,17px);cursor:pointer;transition:all .2s;}
+.tab.active,.tab:hover{background:rgba(196,168,130,.12);color:var(--gold);border-color:rgba(196,168,130,.32);}
+
+.cfg-body{flex:1;overflow-y:auto;padding:2vh 3vw;}
+.tab-pane{display:none;} .tab-pane.active{display:block;}
+
+.sec{margin-bottom:2.5vh;}
+.sec h3{color:var(--gold);font-size:clamp(13px,1.7vmin,24px);font-weight:700;margin-bottom:1.2vh;padding-bottom:.4vh;border-bottom:1px solid rgba(196,168,130,.14);}
+.grid5{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1vh 2vw;}
+.grid5 label{display:flex;flex-direction:column;gap:.3vh;color:rgba(255,255,255,.72);font-size:clamp(12px,1.4vmin,18px);}
+.grid5 input,.grid5 select{background:rgba(255,255,255,.07);border:1px solid rgba(196,168,130,.22);border-radius:7px;color:#fff;padding:.6vh 1vw;font-family:var(--font);font-size:clamp(12px,1.5vmin,18px);width:100%;}
+.chks{display:flex;flex-wrap:wrap;gap:1vh 2vw;}
+.chks label{display:flex;align-items:center;gap:.6vw;padding:.7vh 1vw;background:rgba(255,255,255,.03);border-radius:8px;cursor:pointer;font-size:clamp(12px,1.5vmin,18px);}
+.chks input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
+.note{font-size:clamp(11px,1.3vmin,16px);color:rgba(255,255,255,.42);margin-bottom:1vh;}
+.presets{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:10px;}
+.pre-btn{padding:.6vh 1.4vw;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:rgba(255,255,255,.75);font-family:var(--font);font-size:clamp(11px,1.3vmin,16px);cursor:pointer;transition:all .2s;}
+.pre-btn:hover{background:rgba(196,168,130,.12);border-color:rgba(196,168,130,.3);color:var(--gold);}
+.tbtn{padding:.8vh 2vw;background:rgba(196,168,130,.1);border:1px solid rgba(196,168,130,.22);border-radius:8px;color:var(--gold);font-family:var(--font);font-size:clamp(12px,1.5vmin,18px);cursor:pointer;transition:all .2s;width:100%;}
+.tbtn:hover{background:rgba(196,168,130,.2);}
+.tbtn.danger{color:rgba(255,100,100,.85)!important;border-color:rgba(255,80,80,.28)!important;}
+.tbtn.danger:hover{background:rgba(255,50,50,.15)!important;}
+
+.logo-up{display:flex;flex-direction:column;gap:1.2vh;}
+.logo-prev{background:rgba(255,255,255,.05);border:1px dashed rgba(196,168,130,.22);border-radius:10px;padding:10px 18px;display:inline-flex;}
+.logo-prev img{max-width:100px;max-height:60px;object-fit:contain;background:rgba(255,255,255,.88);border-radius:7px;padding:5px 10px;}
+.upload-btn{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:8px;padding:.8vh 2vw;background:rgba(196,168,130,.1);border:1px solid rgba(196,168,130,.22);border-radius:8px;color:var(--gold)!important;font-family:var(--font);font-size:clamp(12px,1.4vmin,18px)!important;cursor:pointer;transition:all .2s;width:auto!important;}
+.upload-btn:hover{background:rgba(196,168,130,.2);}
+
+.dk-list{display:flex;flex-direction:column;gap:.5vh;max-height:28vh;overflow-y:auto;margin-bottom:1.5vh;}
+.dk-item{background:rgba(255,255,255,.03);border-radius:8px;}
+.dk-lbl{display:flex!important;flex-direction:row!important;align-items:center!important;gap:1vw!important;padding:.8vh 1.2vw;cursor:pointer;}
+.dk-lbl input{width:16px;height:16px;accent-color:var(--gold);flex-shrink:0;cursor:pointer;}
+.dk-lbl span{font-size:clamp(11px,1.4vmin,17px);color:rgba(255,255,255,.78);}
+.dk-badge{font-size:clamp(10px,1vmin,13px);background:rgba(52,152,219,.18);border:1px solid rgba(52,152,219,.32);color:#5db3e8;padding:2px 8px;border-radius:50px;margin-right:auto;white-space:nowrap;}
+
+.cfg-actions{display:flex;gap:2vw;margin-top:2.5vh;padding-top:2vh;border-top:1px solid rgba(196,168,130,.1);}
+.save-btn{flex:1;padding:1.4vh;background:linear-gradient(135deg,var(--gold-dk),var(--gold));border:none;border-radius:10px;color:#000;font-family:var(--font);font-size:clamp(13px,1.8vmin,24px);font-weight:800;cursor:pointer;transition:all .2s;}
+.save-btn:hover{transform:translateY(-2px);filter:brightness(1.1);}
+.rst-btn{flex:1;padding:1.4vh;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:rgba(255,255,255,.6);font-family:var(--font);font-size:clamp(13px,1.8vmin,24px);cursor:pointer;transition:all .2s;}
+.rst-btn:hover{background:rgba(255,255,255,.12);}
+
+/* select options */
+.grid5 select option{background:#0E0A24;color:#fff;}
+
+/* وضع الليل */
+body.night-mode{--bg:#030210;--bg2:#06041A;}
+
+/* ================================================================
+   دعم ريموت التلفزيون — تمييز العنصر المُحدَّد
+   ================================================================ */
+#settingsPanel *:focus {
+  outline: 3px solid #ffd54a !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(255,213,74,.2) !important;
+  border-radius: 6px;
+}
+#settingsPanel input:focus,
+#settingsPanel select:focus,
+#settingsPanel button:focus,
+#settingsPanel .tab:focus {
+  transform: scale(1.04);
+  z-index: 2;
+  position: relative;
+  transition: transform .12s;
+}
+
+/* slider حجم الشعار */
+.logo-scale-row {
+  display: flex; align-items: center; gap: 1.2vw;
+  padding: .6vh 0;
+}
+.logo-scale-row input[type=range] {
+  flex: 1; accent-color: var(--gold);
+  height: 6px; cursor: pointer;
+}
+.logo-scale-val {
+  min-width: 3.5em; text-align: center;
+  color: var(--gold); font-weight: 700;
+  font-size: clamp(12px,1.5vmin,18px);
+}
+
+/* ================================================================
+   وضع ملء الشاشة: بدون لوحة يوتيوب
+   ================================================================ */
+
+/* العمود يأخذ عرض كامل بهوامش مناسبة */
+.two-col.no-media .col-right {
+  padding: 0.8vh 1.5vw 0.3vh;
+  gap: 0.6vh;
+  align-items: center;
+}
+.two-col.no-media .col-right .clock { flex-shrink: 0; min-height: fit-content; align-self: center; }
+
+/* البطاقات: 3 بالصف، تملأ المساحة عمودياً */
+.two-col.no-media .col-right .cards {
+  flex: 1;
+  align-content: stretch;
+  align-items: stretch;
+  gap: 0.6vw;
+  min-height: 0;
+}
+
+/* البطاقات تملأ خلية الـ grid بالكامل */
+.two-col.no-media .col-right .card {
+  padding: 0.35vh 0.8vw;
+  gap: 0.15vh;
+}
+
+/* خطوط أكبر في وضع ملء الشاشة */
+.two-col.no-media .clk-time  { font-size: clamp(64px, 10.8vmin, 148px); }
+.two-col.no-media .clk-per   { font-size: clamp(18px, 2.8vmin, 40px); }
+.two-col.no-media .card-ico  { width: clamp(22px, 3.6vmin, 50px); height: clamp(22px, 3.6vmin, 50px); }
+.two-col.no-media .card-name { font-size: var(--card-name-size); font-weight: 600; }
+.two-col.no-media .card-time { font-size: clamp(26px, 4.4vmin, 58px); font-weight: 700; }
+.two-col.no-media .card-iq   { font-size: clamp(13px, 2vmin, 28px); gap: 0.8vw; }
+.two-col.no-media .nb-lbl    { font-size: clamp(15px, 2.2vmin, 30px); }
+.two-col.no-media .nb-name   { font-size: clamp(19px, 3.2vmin, 44px); }
+.two-col.no-media .nb-cd     { font-size: clamp(18px, 3vmin, 42px); }
+.two-col.no-media .next-bar  { padding: 0.9vh 2.5vw; }
+/* الآية خارج two-col الآن — لا نحتاج ضبطاً هنا */
+.two-col.no-media .v-txt     { font-size: clamp(14px, 2.1vmin, 30px); }
+.two-col.no-media .v-br      { font-size: clamp(15px, 2.3vmin, 34px); }
+.two-col.no-media .v-ref     { font-size: clamp(11px, 1.5vmin, 20px); }
+
+/* ================================================================
+   وضع الماوس — يُضاف mouse-mode على body عند تحريك الماوس
+   يُظهر المؤشر المناسب على كل عنصر تفاعلي
+   ================================================================ */
+body.mouse-mode .cfg-btn,
+body.mouse-mode .tab,
+body.mouse-mode .cfg-x,
+body.mouse-mode .tbtn,
+body.mouse-mode .save-btn,
+body.mouse-mode .rst-btn,
+body.mouse-mode .pre-btn,
+body.mouse-mode .upload-btn,
+body.mouse-mode .mi-toggle,
+body.mouse-mode .mi-play,
+body.mouse-mode .mi-del,
+body.mouse-mode .dk-lbl,
+body.mouse-mode input[type="checkbox"],
+body.mouse-mode input[type="file"],
+body.mouse-mode select { cursor: pointer !important; }
+
+body.mouse-mode input[type="number"],
+body.mouse-mode input[type="text"],
+body.mouse-mode input[type="url"],
+body.mouse-mode input[type="time"],
+body.mouse-mode textarea { cursor: text !important; }
+
+body.mouse-mode input[type="range"] { cursor: ew-resize !important; }
+
+/* زر الإعدادات — أوضح في وضع الماوس */
+body.mouse-mode .cfg-btn { opacity: 0.6 !important; }
+body.mouse-mode .cfg-btn:hover { opacity: 1 !important; }
+
+/* تلميح: ضغطة واحدة تكفي في وضع الماوس */
+body.mouse-mode .cfg-btn::after {
+  content: '⚙';
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: rgba(196,168,130,0.45);
+  white-space: nowrap;
+  pointer-events: none;
+}

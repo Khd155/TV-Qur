@@ -1,0 +1,7 @@
+﻿android/
+.claude/
+.idea/
+*.jks
+make_icons*.py
+supabase_schema.sql
+node_modules/

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>مواقيت الصلاة - شركة قريش</title>
+<link rel="stylesheet" href="style.css">
+<!-- خطوط محلية — لا تحتاج اتصال بالإنترنت -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- إعدادات الاتصال بقاعدة البيانات — عدّل config.js ببيانات مشروعك -->
+<script src="config.js"></script>
+</head>
+<body>
+
+<!-- طبقات الخلفية -->
+<div class="bg"></div>
+<svg class="bg-geo" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="80" height="80" patternUnits="userSpaceOnUse"><polygon points="40,4 49,28 76,28 54,44 63,68 40,52 17,68 26,44 4,28 31,28" fill="none" stroke="rgba(212,168,83,0.06)" stroke-width="0.7"/></pattern></defs><rect width="100%" height="100%" fill="url(#p)"/></svg>
+<div class="bg-vign"></div>
+<div class="corner c-tr"></div><div class="corner c-tl"></div>
+<div class="corner c-br"></div><div class="corner c-bl"></div>
+
+<!-- ======= الشاشة الرئيسية ======= -->
+<div id="mainDashboard" class="page show">
+
+  <!-- ===== الهيدر ===== -->
+  <header class="hdr">
+    <div class="hdr-logo">
+      <img id="companyLogo" src="logo.png" alt="الشعار" class="logo-img">
+    </div>
+    <div class="hdr-date">
+      <div class="bism-hdr">
+        <span class="bism-orn">❧</span>
+        <span class="bism-txt">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</span>
+        <span class="bism-orn">❧</span>
+      </div>
+      <div class="d-row">
+        <span id="dayName" class="d-day">—</span>
+        <span class="d-sep">◆</span>
+        <span id="hijriDate" class="d-hijri">—</span>
+        <span class="d-sep">◆</span>
+        <span id="gregorianDate" class="d-greg">—</span>
+      </div>
+    </div>
+    <div class="hdr-loc">
+      <svg class="loc-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <div>
+        <div id="locName" class="loc-name">مخيم منى</div>
+        <div class="loc-sub">مكة المكرمة</div>
+        <div id="locTemp" class="loc-temp">—</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== شريط الإعلانات ===== -->
+  <div id="announcementBar" class="ann-bar" style="display:none">
+    <span class="ann-icon">📢</span>
+    <span id="announcementText" class="ann-txt"></span>
+  </div>
+
+  <!-- ===== التخطيط الرئيسي: عمودين ===== -->
+  <div class="two-col">
+
+    <!-- ====== العمود الأيسر (يمين الشاشة): مشغّل المحتوى ====== -->
+    <div class="col-left">
+      <div class="media-zone">
+        <div class="media-aspect" id="mediaAspect" style="display:none">
+          <iframe id="mediaFrame" src="" frameborder="0" allowfullscreen
+            allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share">
+          </iframe>
+        </div>
+        <div class="media-empty" id="mediaEmpty">
+          <svg viewBox="0 0 64 64" fill="none" stroke="rgba(212,168,83,0.25)" stroke-width="1.5">
+            <rect x="4" y="12" width="56" height="38" rx="5"/>
+            <polygon points="26,24 26,40 42,32" fill="rgba(212,168,83,0.2)" stroke="none"/>
+          </svg>
+          <span>لا يوجد محتوى</span>
+          <span class="media-empty-sub">أضف روابط يوتيوب من الإعدادات ← 📺 المحتوى</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== العمود الأيمن (يسار الشاشة): المواقيت ====== -->
+    <div class="col-right">
+
+      <div class="clock">
+        <span id="currentTime" class="clk-time">00:00:00</span>
+        <span id="currentPeriod" class="clk-per">صباحاً</span>
+      </div>
+
+      <div class="next-bar">
+        <span id="nextBarLabel" class="nb-lbl">الصلاة القادمة</span>
+        <span id="nextPrayerName" class="nb-name">—</span>
+        <span class="nb-dot">·</span>
+        <span id="nextPrayerCountdown" class="nb-cd">—</span>
+      </div>
+
+      <div class="cards">
+        <div class="card" id="card-fajr">
+          <div class="card-ico"><svg viewBox="0 0 64 64"><circle cx="32" cy="40" r="12" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="32" y1="24" x2="32" y2="17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="18" y1="30" x2="13" y2="25" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="46" y1="30" x2="51" y2="25" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="4" y1="52" x2="60" y2="52" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="card-name">الفجر</div>
+          <div id="time-fajr" class="card-time">—</div>
+          <div class="card-iq"><span>الإقامة</span><span id="iqamah-val-fajr">—</span></div>
+        </div>
+
+        <div class="card" id="card-sunrise">
+          <div class="card-ico"><svg viewBox="0 0 64 64"><circle cx="32" cy="42" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="32" y1="28" x2="32" y2="22" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="20" y1="33" x2="15" y2="29" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="44" y1="33" x2="49" y2="29" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="6" y1="52" x2="58" y2="52" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="card-name">الشروق</div>
+          <div id="time-sunrise" class="card-time">—</div>
+          <div class="card-iq"><span>الإشراق</span><span id="time-ishraq">—</span></div>
+        </div>
+
+        <div class="card" id="card-dhuhr">
+          <div class="card-ico"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="11" fill="currentColor"/><line x1="32" y1="13" x2="32" y2="7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="32" y1="57" x2="32" y2="51" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="32" x2="7" y2="32" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="57" y1="32" x2="51" y2="32" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="19" y1="19" x2="14" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="45" y1="19" x2="50" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="card-name">الظهر</div>
+          <div id="time-dhuhr" class="card-time">—</div>
+          <div class="card-iq"><span>الإقامة</span><span id="iqamah-val-dhuhr">—</span></div>
+        </div>
+
+        <div class="card" id="card-asr">
+          <div class="card-ico"><svg viewBox="0 0 64 64"><circle cx="30" cy="32" r="11" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="30" cy="32" r="4.5" fill="currentColor"/><line x1="30" y1="14" x2="30" y2="8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="30" y1="56" x2="30" y2="50" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="card-name">العصر</div>
+          <div id="time-asr" class="card-time">—</div>
+          <div class="card-iq"><span>الإقامة</span><span id="iqamah-val-asr">—</span></div>
+        </div>
+
+        <div class="card" id="card-maghrib">
+          <div class="card-ico"><svg viewBox="0 0 64 64"><circle cx="32" cy="38" r="12" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="32" y1="22" x2="32" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="4" y1="50" x2="60" y2="50" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="card-name">المغرب</div>
+          <div id="time-maghrib" class="card-time">—</div>
+          <div class="card-iq"><span>الإقامة</span><span id="iqamah-val-maghrib">—</span></div>
+        </div>
+
+        <div class="card" id="card-isha">
+          <div class="card-ico"><svg viewBox="0 0 64 64"><path d="M36 12C24 12 16 22 16 32c0 10 8 20 20 20-8-4-12-12-12-20s4-16 12-20z" fill="currentColor"/><circle cx="44" cy="16" r="1.5" fill="currentColor"/><circle cx="50" cy="26" r="1" fill="currentColor"/><circle cx="47" cy="37" r="1.5" fill="currentColor"/></svg></div>
+          <div class="card-name">العشاء</div>
+          <div id="time-isha" class="card-time">—</div>
+          <div class="card-iq"><span>الإقامة</span><span id="iqamah-val-isha">—</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- شريط الآية / الذكر — خارج المحتوى تماماً -->
+  <div class="verse" id="mainTicker">
+    <span class="v-br" id="tickerOpen">﴿</span>
+    <span class="v-txt" id="tickerText">إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا</span>
+    <span class="v-br" id="tickerClose">﴾</span>
+    <span class="v-ref" id="tickerRef">النساء: ١٠٣</span>
+  </div>
+
+  <!-- شريط الفوتر -->
+  <footer class="ftr">
+    <div class="ticker" id="footerTicker">
+      <div class="tk-inner" id="tkInner">
+        <span id="tickerHijri"></span><span class="tk-sep">◆</span>
+        <span id="tickerGregorian"></span><span class="tk-sep">◆</span>
+        <span id="tickerTemp">مكة المكرمة</span><span class="tk-sep">◆</span>
+        <span>طريقة الحساب: أم القرى</span><span class="tk-sep">◆</span>
+        <span id="tickerAlert"></span><span class="tk-sep">◆</span>
+        <span>شركة قريش المحدودة © <span id="currentYear"></span></span>
+        <span class="tk-sep">◆</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ======= تنبيه قبل الأذان ======= -->
+<div id="preAlertOverlay" class="overlay-top" style="display:none">
+  <div class="pa-box">
+    <div class="pa-pulse"></div>
+    <span>🔔</span>
+    <span id="preAlertText" class="pa-txt">تبقى 5 دقائق على أذان الظهر</span>
+  </div>
+</div>
+
+<!-- ======= شاشة الأذان ======= -->
+<div id="adhanScreen" class="fullscr adhan-scr" style="display:none">
+  <div class="adhan-glow"></div>
+  <div class="adhan-body">
+    <div class="adhan-ico">🕌</div>
+    <div class="adhan-lbl">حانَ الآنَ وَقْتُ</div>
+    <div id="adhanPrayerName" class="adhan-name">الظهر</div>
+    <div class="adhan-sub">الله أكبر، الله أكبر</div>
+    <div class="adhan-dua">
+      اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ وَالصَّلَاةِ الْقَائِمَةِ<br>
+      آتِ مُحَمَّدًا الْوَسِيلَةَ وَالْفَضِيلَةَ<br>
+      وَابْعَثْهُ مَقَامًا مَحْمُودًا الَّذِي وَعَدْتَهُ
+    </div>
+  </div>
+</div>
+
+<!-- ======= عداد الإقامة ======= -->
+<div id="iqamahCountdownScreen" class="fullscr iqamah-scr" style="display:none">
+  <div class="iq-body">
+    <div id="iqamahCountdownPrayerName" class="iq-name">الظهر</div>
+    <div class="iq-lbl">الإقامة خلال</div>
+    <div id="iqamahCountdownTimer" class="iq-timer">10:00</div>
+    <div id="iqamahCountdownClock" class="iq-clk"></div>
+  </div>
+</div>
+
+<!-- ======= شاشة الصلاة الصامتة ======= -->
+<div id="prayerSilentScreen" class="fullscr silent-scr" style="display:none">
+  <div class="sl-body">
+    <div id="silentTime" class="sl-time"></div>
+    <div class="sl-lbl">وقت أداء الصلاة</div>
+  </div>
+</div>
+
+<!-- ======= شاشة الأذكار ======= -->
+<div id="dhikrScreen" class="fullscr dhikr-scr" style="display:none">
+  <div class="dk-body">
+    <div class="dk-top">
+      <div class="dk-head">📿 أذكار بعد الصلاة</div>
+      <div class="dk-cnt"><span id="dhikrCounter">1</span>/<span id="dhikrTotal">13</span></div>
+    </div>
+    <div class="dk-card">
+      <div id="dhikrTitle" class="dk-title"></div>
+      <div id="dhikrText" class="dk-text"></div>
+      <div id="dhikrSubtitle" class="dk-sub"></div>
+      <div id="dhikrRepeat" class="dk-rep"></div>
+    </div>
+    <div class="dk-bar"><div id="dhikrProgress" class="dk-prog"></div></div>
+  </div>
+</div>
+
+<!-- ======= زر الإعدادات ======= -->
+<button class="cfg-btn" id="settingsTrigger">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+</button>
+
+<!-- ======= لوحة الإعدادات ======= -->
+<div id="settingsPanel" class="cfg-panel" style="display:none">
+  <div class="cfg-hdr">
+    <h2>⚙️ لوحة التحكم</h2>
+    <button id="settingsClose" class="cfg-x">×</button>
+  </div>
+  <div class="cfg-tabs">
+    <button class="tab active" data-tab="iqamah">الإقامة</button>
+    <button class="tab" data-tab="alerts">التنبيهات</button>
+    <button class="tab" data-tab="flow">الحالات</button>
+    <button class="tab" data-tab="dhikr">الأذكار</button>
+    <button class="tab" data-tab="identity">الهوية</button>
+    <button class="tab" data-tab="location">الموقع</button>
+    <button class="tab" data-tab="display">العرض</button>
+    <button class="tab" data-tab="announce">📢 الإعلانات</button>
+    <button class="tab" data-tab="media">📺 المحتوى</button>
+  </div>
+  <div class="cfg-body">
+
+    <!-- الإقامة -->
+    <div class="tab-pane active" id="tab-iqamah">
+      <div class="sec"><h3>أوقات الإقامة (دقائق بعد الأذان)</h3>
+        <div class="grid5">
+          <label>الفجر<input type="number" id="iqamah-fajr" value="20" min="1" max="60"></label>
+          <label>الظهر<input type="number" id="iqamah-dhuhr" value="15" min="1" max="60"></label>
+          <label>العصر<input type="number" id="iqamah-asr" value="15" min="1" max="60"></label>
+          <label>المغرب<input type="number" id="iqamah-maghrib" value="10" min="1" max="60"></label>
+          <label>العشاء<input type="number" id="iqamah-isha" value="15" min="1" max="60"></label>
+        </div>
+      </div>
+      <div class="sec"><h3>مدة شاشة الصلاة الصامتة (دقائق)</h3>
+        <div class="grid5">
+          <label>الفجر<input type="number" id="blackout-fajr" value="10" min="1" max="60"></label>
+          <label>الظهر<input type="number" id="blackout-dhuhr" value="10" min="1" max="60"></label>
+          <label>العصر<input type="number" id="blackout-asr" value="10" min="1" max="60"></label>
+          <label>المغرب<input type="number" id="blackout-maghrib" value="10" min="1" max="60"></label>
+          <label>العشاء<input type="number" id="blackout-isha" value="10" min="1" max="60"></label>
+        </div>
+      </div>
+      <div class="sec"><h3>بدء عداد الإقامة قبل (دقائق)</h3>
+        <div class="grid5"><label>الدقائق<input type="number" id="iqamahCountdownMinutes" value="10" min="1" max="30"></label></div>
+      </div>
+    </div>
+
+    <!-- التنبيهات -->
+    <div class="tab-pane" id="tab-alerts">
+      <div class="sec"><h3>التنبيه قبل الأذان (دقائق)</h3>
+        <div class="grid5">
+          <label>الفجر<input type="number" id="alert-fajr" value="5" min="0" max="30"></label>
+          <label>الظهر<input type="number" id="alert-dhuhr" value="5" min="0" max="30"></label>
+          <label>العصر<input type="number" id="alert-asr" value="5" min="0" max="30"></label>
+          <label>المغرب<input type="number" id="alert-maghrib" value="5" min="0" max="30"></label>
+          <label>العشاء<input type="number" id="alert-isha" value="5" min="0" max="30"></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- الحالات -->
+    <div class="tab-pane" id="tab-flow">
+      <div class="sec"><h3>تفعيل / إيقاف الحالات</h3>
+        <div class="chks">
+          <label><input type="checkbox" id="enablePreAlert" checked> تنبيه قبل الأذان 🟡</label>
+          <label><input type="checkbox" id="enableAdhanScreen" checked> شاشة الأذان 🔴</label>
+          <label><input type="checkbox" id="enableIqamahCountdown" checked> عداد الإقامة 🔵</label>
+          <label><input type="checkbox" id="enablePrayerSilent" checked> وضع الصلاة ⚫</label>
+          <label><input type="checkbox" id="enableDhikr" checked> الأذكار 🟢</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- الأذكار -->
+    <div class="tab-pane" id="tab-dhikr">
+      <div class="sec"><h3>مدة كل ذكر (ثانية)</h3>
+        <div class="grid5"><label>المدة<input type="number" id="dhikrDuration" value="20" min="10" max="60"></label></div>
+      </div>
+      <div class="sec"><h3>الأذكار المفعّلة</h3>
+        <div id="dhikrSettingsList" class="dk-list"></div>
+        <button class="tbtn" id="btnTestDhikr">🧪 معاينة الأذكار</button>
+      </div>
+    </div>
+
+    <!-- الهوية -->
+    <div class="tab-pane" id="tab-identity">
+      <div class="sec"><h3>اسم الجهة</h3>
+        <div class="grid5">
+          <label>عربي<input type="text" id="orgNameAr" value="شركة قريش المحدودة"></label>
+          <label>English<input type="text" id="orgNameEn" value="Quraish Company Limited"></label>
+        </div>
+      </div>
+      <div class="sec"><h3>الشعار</h3>
+        <div class="logo-up">
+          <div class="logo-prev"><img id="logoPreview" src="logo.png" alt="الشعار"></div>
+          <label class="upload-btn">📁 رفع شعار جديد<input type="file" id="logoUpload" accept="image/*" style="display:none"></label>
+          <button class="tbtn" id="btnResetLogo">↺ استعادة الأصلي</button>
+        </div>
+      </div>
+      <div class="sec"><h3>حجم الشعار في الهيدر</h3>
+        <div class="logo-scale-row">
+          <span>صغير</span>
+          <input type="range" id="logoScale" min="0.4" max="1.4" step="0.05" value="0.85">
+          <span>كبير</span>
+          <span class="logo-scale-val" id="logoScaleVal">85%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- الموقع -->
+    <div class="tab-pane" id="tab-location">
+      <div class="sec"><h3>الموقع</h3>
+        <div class="grid5">
+          <label>المدينة
+            <select id="locationPreset">
+              <option value="makkah">مكة - المسجد الحرام</option>
+              <option value="mina" selected>مكة - مخيم منى</option>
+              <option value="arafat">مكة - مخيم عرفة</option>
+              <option value="jeddah">جدة</option>
+              <option value="riyadh">الرياض</option>
+              <option value="custom">إحداثيات يدوية</option>
+            </select>
+          </label>
+          <label>خط العرض<input type="number" id="customLat" step="0.0001" value="21.3964"></label>
+          <label>خط الطول<input type="number" id="customLng" step="0.0001" value="39.8838"></label>
+        </div>
+        <p class="note" style="margin-top:1vh">
+          📍 منى وعرفة ومكة جميعها تستخدم إحداثيات <strong style="color:var(--gold)">المسجد الحرام</strong> لضمان دقة مواقيت الصلاة.
+        </p>
+      </div>
+    </div>
+
+    <!-- العرض -->
+    <div class="tab-pane" id="tab-display">
+      <div class="sec"><h3>المظهر</h3>
+        <div class="chks">
+          <label>الخط<select id="fontFamily" style="margin-right:8px"><option value="Cairo">Cairo</option><option value="Amiri">Amiri</option></select></label>
+          <label><input type="checkbox" id="nightMode"> وضع الليل</label>
+        </div>
+      </div>
+      <div class="sec"><h3>حجم أسماء الصلوات (الفجر، الظهر...)</h3>
+        <div class="logo-scale-row">
+          <span>صغير</span>
+          <input type="range" id="cardNameSize" min="2" max="8" step="0.5" value="4">
+          <span>كبير</span>
+          <span class="logo-scale-val" id="cardNameSizeVal">4vmin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- الإعلانات -->
+    <div class="tab-pane" id="tab-announce">
+      <div class="sec"><h3>شريط الإعلانات</h3>
+        <div class="chks">
+          <label><input type="checkbox" id="enableAnnouncement"> تفعيل شريط الإعلانات</label>
+        </div>
+        <div class="grid5" style="grid-template-columns:1fr; margin-top:1.2vh">
+          <label>نص الإعلان
+            <textarea id="announcementContent" rows="4" style="background:rgba(255,255,255,0.07);border:1px solid rgba(212,168,83,0.22);border-radius:7px;color:#fff;padding:0.8vh 1vw;font-family:var(--font);font-size:clamp(12px,1.5vmin,18px);width:100%;resize:vertical;direction:rtl" placeholder="اكتب نص الإعلان هنا..."></textarea>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== المحتوى (يوتيوب) ===== -->
+    <div class="tab-pane" id="tab-media">
+
+      <!-- إظهار / إخفاء لوحة يوتيوب -->
+      <div class="sec">
+        <h3>إعدادات العرض</h3>
+        <div class="chks">
+          <label><input type="checkbox" id="showYoutubePanel" checked> إظهار لوحة المحتوى (يوتيوب)</label>
+        </div>
+      </div>
+
+      <!-- اختصارات سريعة -->
+      <div class="sec">
+        <h3>اختصارات سريعة</h3>
+        <div class="presets">
+          <button class="pre-btn" data-mlabel="🕋 الحرم المكي" data-murl="https://www.youtube.com/watch?v=f7pTRbbwjfc">🕋 الحرم المكي</button>
+          <button class="pre-btn" data-mlabel="🕌 المسجد النبوي" data-murl="https://www.youtube.com/watch?v=XNXwnP5EYkc">🕌 المسجد النبوي</button>
+        </div>
+      </div>
+
+      <!-- إضافة مقطع -->
+      <div class="sec">
+        <h3>إضافة مقطع أو قائمة تشغيل</h3>
+        <div class="grid5" style="grid-template-columns:1fr 1fr">
+          <label>الاسم<input type="text" id="mLabel" placeholder="مثال: بث الحرم المكي"></label>
+          <label>رابط يوتيوب<input type="url" id="mUrl" placeholder="https://youtube.com/watch?v=..."></label>
+        </div>
+        <div class="grid5" style="margin-top:1vh">
+          <label>
+            طريقة العرض
+            <select id="mMode">
+              <option value="auto">تلقائي (بلا حد)</option>
+              <option value="countdown">مؤقت بالثواني</option>
+              <option value="timeRange">توقيت محدد (من/إلى)</option>
+            </select>
+          </label>
+          <label id="mDurationWrap" style="display:none">
+            مدة العرض (ثانية)
+            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">عدد الثواني قبل الانتقال للتالي</small>
+            <input type="number" id="mDuration" value="120" min="1" max="86400">
+          </label>
+          <label id="mFromWrap" style="display:none">
+            بداية التوقيت
+            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">اختياري</small>
+            <input type="time" id="mFrom">
+          </label>
+          <label id="mToWrap" style="display:none">
+            نهاية التوقيت
+            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">اختياري</small>
+            <input type="time" id="mTo">
+          </label>
+        </div>
+        <button class="tbtn" id="btnAddMedia" style="margin-top:1.2vh">+ إضافة للقائمة</button>
+      </div>
+
+      <!-- قائمة المحتوى الحالية -->
+      <div class="sec">
+        <h3>قائمة المحتوى <span id="mediaCountBadge" class="mi-count-badge"></span></h3>
+        <p class="note">العناصر بدون توقيت تتناوب تلقائياً حسب المدة المحددة. العناصر بتوقيت تُعزف في وقتها وتأخذ الأولوية.</p>
+        <div id="mediaItemsList" class="media-list-ui"></div>
+        <button class="tbtn danger" id="btnClearMedia" style="margin-top:1vh;width:auto;padding:.6vh 2vw">✕ مسح القائمة كلها</button>
+      </div>
+
+    </div><!-- /tab-media -->
+
+    <div class="cfg-actions">
+      <button class="save-btn" id="btnSaveSettings">💾 حفظ الإعدادات</button>
+      <button class="rst-btn" id="btnResetSettings">↺ استعادة الافتراضي</button>
+    </div>
+  </div>
+</div>
+
+<script src="praytimes.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
