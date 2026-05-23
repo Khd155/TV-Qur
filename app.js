@@ -579,7 +579,8 @@ let mediaList=[];
 let mediaCurrentId=null;
 let mediaRotIdx=0;
 let mediaStartTime=0;
-let mediaStarted=false; // لا يُشغَّل تلقائياً — يبدأ فقط بعد ضغط زر التشغيل
+let mediaStarted=false;
+let mediaAdvanceTimer=null; // مؤقت الانتقال التلقائي للفيديو التالي
 
 const MEDIA_DEFAULTS=[
   {id:1,label:'🕋 البث المباشر',url:'https://www.youtube.com/live/fZvuHkHYaXk?si=hGpNGhGVeNdSpL68',mode:'auto',durationSec:0,from:'',to:'',enabled:true},
@@ -667,18 +668,42 @@ function inRange(from,to){
 
 function playMedia(item){
   const aspect=g('mediaAspect'), frame=g('mediaFrame'), empty=g('mediaEmpty');
+
+  // ألغِ أي مؤقت انتقال سابق
+  if(mediaAdvanceTimer){ clearTimeout(mediaAdvanceTimer); mediaAdvanceTimer=null; }
+
   if(!item||!item.url){
     if(aspect) aspect.style.display='none';
     if(frame) frame.src='';
     if(empty) empty.style.display='flex';
     mediaCurrentId=null; return;
   }
+
+  // لا تعيد تحميل نفس الفيديو
   if(mediaCurrentId===item.id) return;
+
   if(frame) frame.src=getYouTubeEmbed(item.url);
   if(aspect) aspect.style.display='flex';
   if(empty) empty.style.display='none';
   mediaCurrentId=item.id;
   mediaStartTime=Date.now();
+
+  // جدوِل الانتقال التلقائي بـ setTimeout دقيق (لا polling)
+  const dur=(item.durationSec||0)*1000;
+  if(dur>0){
+    mediaAdvanceTimer=setTimeout(()=>{ mediaAdvanceNext(); }, dur);
+  }
+}
+
+/* ينتقل للفيديو التالي في القائمة ويكرر */
+function mediaAdvanceNext(){
+  mediaAdvanceTimer=null;
+  const enabled=mediaList.filter(m=>m.enabled&&m.url);
+  const rot=enabled.filter(m=>m.mode!=='timeRange');
+  if(!rot.length){ playMedia(null); return; }
+  mediaCurrentId=null; // اسمح لـ playMedia بإعادة التحميل
+  mediaRotIdx=(mediaRotIdx+1)%rot.length;
+  playMedia(rot[mediaRotIdx]);
 }
 
 function mediaSchedulerTick(){
@@ -693,34 +718,18 @@ function mediaSchedulerTick(){
   // عناصر timeRange لها أولوية
   const scheduled=enabled.find(m=>m.mode==='timeRange'&&m.from&&m.to&&inRange(m.from,m.to));
   if(scheduled){
-    if(mediaCurrentId!==scheduled.id) playMedia(scheduled);
+    if(mediaCurrentId!==scheduled.id){ mediaCurrentId=null; playMedia(scheduled); }
     return;
   }
 
-  // قائمة الدوران — كل العناصر غير timeRange
+  // إذا في شيء يشتغل وعنده مؤقت → لا تتدخل
+  if(mediaCurrentId!==null && mediaAdvanceTimer) return;
+
+  // ابدأ التشغيل إذا لا شيء يعزف
   const rot=enabled.filter(m=>m.mode!=='timeRange');
   if(!rot.length){ playMedia(null); return; }
   if(mediaRotIdx>=rot.length) mediaRotIdx=0;
-
-  const cur=rot[mediaRotIdx];
-
-  // إذا كان يشتغل الحالي → تحقق هل انتهت مدته
-  if(mediaCurrentId===cur.id){
-    const dur=cur.durationSec||0;
-    if(dur>0){
-      const elapsed=(Date.now()-mediaStartTime)/1000;
-      if(elapsed>=dur){
-        // انتقل للتالي — دوران لا نهائي
-        mediaRotIdx=(mediaRotIdx+1)%rot.length;
-        playMedia(rot[mediaRotIdx]);
-      }
-    }
-    // إذا dur=0 → يشتغل إلى الأبد حتى يتدخل المستخدم
-    return;
-  }
-
-  // لا شيء يشتغل أو المعزوف مو في القائمة → ابدأ
-  playMedia(cur);
+  if(mediaCurrentId===null) playMedia(rot[mediaRotIdx]);
 }
 
 function buildMediaUI(){
