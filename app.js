@@ -682,8 +682,10 @@ function playMedia(item){
 }
 
 function mediaSchedulerTick(){
-  // لا يُشغَّل تلقائياً — ينتظر حتى يضغط المستخدم زر التشغيل يدوياً
-  if(!mediaStarted) return;
+  // يبدأ تلقائياً إذا في محتوى مفعّل — أو إذا ضغط المستخدم تشغيل
+  const hasEnabled=mediaList.some(m=>m.enabled&&m.url);
+  if(!mediaStarted&&!hasEnabled) return;
+  if(hasEnabled) mediaStarted=true; // تشغيل تلقائي عند وجود محتوى
   const enabled=mediaList.filter(m=>m.enabled&&m.url);
   if(!enabled.length){ playMedia(null); return; }
 
