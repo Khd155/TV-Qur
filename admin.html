@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم — قريش</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#0d0d1a; --card:#141428; --border:rgba(255,255,255,.1);
+  --gold:#c4a852; --gold2:#e8d08a; --blue:#3b82f6;
+  --green:#22c55e; --red:#ef4444; --text:#e8e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,Arial,sans-serif;min-height:100vh;}
+/* ===== HEADER ===== */
+.header{background:linear-gradient(135deg,#1a0e3a,#0d1a2e);border-bottom:1px solid var(--border);
+  padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.header h1{font-size:1.4rem;color:var(--gold);font-weight:700;}
+.header h1 span{color:var(--text);font-weight:400;font-size:.9rem;opacity:.7;display:block;}
+.status-badge{display:flex;align-items:center;gap:.5rem;font-size:.85rem;padding:.4rem 1rem;
+  border-radius:50px;border:1px solid var(--border);}
+.status-badge.connected{border-color:rgba(34,197,94,.4);color:var(--green);}
+.status-badge.offline{border-color:rgba(239,68,68,.4);color:var(--red);}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* ===== LAYOUT ===== */
+.container{max-width:1100px;margin:0 auto;padding:2rem 1.5rem;display:grid;gap:1.5rem;}
+/* ===== CARDS ===== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.card-header{padding:1rem 1.5rem;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.7rem;font-weight:600;font-size:1rem;color:var(--gold);}
+.card-body{padding:1.5rem;}
+/* ===== GRID ===== */
+.grid{display:grid;gap:1rem;}
+.g2{grid-template-columns:repeat(2,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g5{grid-template-columns:repeat(5,1fr);}
+@media(max-width:700px){.g2,.g3,.g5{grid-template-columns:1fr 1fr;}}
+/* ===== INPUTS ===== */
+label{display:flex;flex-direction:column;gap:.4rem;font-size:.82rem;color:rgba(255,255,255,.6);}
+input[type=number],input[type=text],input[type=url],select,textarea{
+  background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:.55rem .8rem;font-size:.9rem;font-family:inherit;width:100%;
+  transition:border-color .2s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);}
+textarea{resize:vertical;min-height:80px;}
+/* toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:.9rem;}
+.toggle-label small{display:block;font-size:.75rem;color:rgba(255,255,255,.4);margin-top:2px;}
+.switch{position:relative;width:44px;height:24px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:24px;cursor:pointer;transition:.3s;}
+.slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;transition:.3s;}
+.switch input:checked+.slider{background:var(--blue);}
+.switch input:checked+.slider:before{transform:translateX(20px);}
+/* prayer table */
+.ptable{width:100%;border-collapse:collapse;}
+.ptable th,.ptable td{padding:.6rem .8rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);}
+.ptable th{font-size:.78rem;color:rgba(255,255,255,.5);font-weight:500;}
+.ptable td:first-child{text-align:right;font-weight:600;color:var(--gold2);}
+.ptable input{width:65px;text-align:center;}
+/* ===== BUTTONS ===== */
+.btn{padding:.65rem 1.4rem;border-radius:8px;border:none;cursor:pointer;font-size:.9rem;
+  font-family:inherit;font-weight:600;transition:.2s;}
+.btn-primary{background:var(--gold);color:#0d0d1a;}
+.btn-primary:hover{background:var(--gold2);}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.btn-danger:hover{background:rgba(239,68,68,.3);}
+.btn-row{display:flex;gap:.8rem;justify-content:flex-end;flex-wrap:wrap;margin-top:1rem;}
+/* ===== TOAST ===== */
+#toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);
+  background:#1e293b;border:1px solid var(--border);border-radius:10px;padding:.8rem 1.5rem;
+  font-size:.9rem;transition:.3s;opacity:0;z-index:999;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.ok{border-color:rgba(34,197,94,.5);color:var(--green);}
+#toast.err{border-color:rgba(239,68,68,.5);color:var(--red);}
+/* ===== MEDIA LIST ===== */
+.media-item{display:flex;align-items:center;gap:.7rem;padding:.7rem;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;margin-bottom:.5rem;}
+.media-item input{flex:1;}
+.media-del{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);
+  border-radius:6px;padding:.3rem .7rem;cursor:pointer;font-size:.8rem;}
+.add-row{display:flex;gap:.5rem;margin-top:.8rem;}
+.add-row input{flex:1;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🕌 لوحة التحكم <span>شركة قريش المحدودة — التحكم عن بُعد</span></h1>
+  </div>
+  <div class="status-badge offline" id="statusBadge">
+    <span class="dot"></span><span id="statusText">جاري الاتصال...</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- الهوية -->
+  <div class="card">
+    <div class="card-header">🏢 هوية الشركة</div>
+    <div class="card-body">
+      <div class="grid g2">
+        <label>الاسم بالعربية<input type="text" id="orgNameAr"></label>
+        <label>الاسم بالإنجليزية<input type="text" id="orgNameEn"></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- الموقع -->
+  <div class="card">
+    <div class="card-header">📍 الموقع الجغرافي</div>
+    <div class="card-body">
+      <div class="grid g3">
+        <label>الموقع المحدد
+          <select id="locationPreset">
+            <option value="mina">مكة المكرمة — منى</option>
+            <option value="makkah">مكة المكرمة</option>
+            <option value="arafat">مكة المكرمة — عرفة</option>
+            <option value="jeddah">جدة</option>
+            <option value="riyadh">الرياض</option>
+            <option value="custom">موقع مخصص</option>
+          </select>
+        </label>
+        <label>خط العرض<input type="number" id="latitude" step="0.0001"></label>
+        <label>خط الطول<input type="number" id="longitude" step="0.0001"></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- أوقات الإقامة والتنبيهات -->
+  <div class="card">
+    <div class="card-header">🕐 دقائق الإقامة والتنبيهات</div>
+    <div class="card-body">
+      <table class="ptable">
+        <thead>
+          <tr>
+            <th>الصلاة</th>
+            <th>الإقامة (دق)</th>
+            <th>السكوت (دق)</th>
+            <th>التنبيه المسبق (دق)</th>
+          </tr>
+        </thead>
+        <tbody id="prayerTable"></tbody>
+      </table>
+      <div style="margin-top:1rem;">
+        <label style="max-width:220px">عداد الإقامة (دق)
+          <input type="number" id="iqamahCountdownMinutes" min="1" max="30">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- الحالات -->
+  <div class="card">
+    <div class="card-header">⚙️ الحالات والميزات</div>
+    <div class="card-body">
+      <div class="toggle-row">
+        <div class="toggle-label">شاشة الأذان<small>تظهر عند وقت الأذان</small></div>
+        <label class="switch"><input type="checkbox" id="enableAdhanScreen"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">عداد الإقامة<small>عداد تنازلي قبل الإقامة</small></div>
+        <label class="switch"><input type="checkbox" id="enableIqamahCountdown"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">التنبيه المسبق<small>تنبيه قبل الأذان بدقائق</small></div>
+        <label class="switch"><input type="checkbox" id="enablePreAlert"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">شاشة السكوت<small>تُعرض خلال وقت الصلاة</small></div>
+        <label class="switch"><input type="checkbox" id="enablePrayerSilent"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">شاشة الأذكار<small>أذكار بعد الصلاة</small></div>
+        <label class="switch"><input type="checkbox" id="enableDhikr"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">لوحة الفيديو (يوتيوب)<small>إظهار عمود الفيديو</small></div>
+        <label class="switch"><input type="checkbox" id="showYoutubePanel"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label">الوضع الليلي</div>
+        <label class="switch"><input type="checkbox" id="nightMode"><span class="slider"></span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- الإعلان -->
+  <div class="card">
+    <div class="card-header">📢 شريط الإعلانات</div>
+    <div class="card-body">
+      <div class="toggle-row" style="margin-bottom:1rem">
+        <div class="toggle-label">تفعيل الإعلان</div>
+        <label class="switch"><input type="checkbox" id="enableAnnouncement"><span class="slider"></span></label>
+      </div>
+      <label>نص الإعلان<textarea id="announcementText" placeholder="اكتب الإعلان هنا..."></textarea></label>
+    </div>
+  </div>
+
+  <!-- المحتوى -->
+  <div class="card">
+    <div class="card-header">📺 قائمة المحتوى (يوتيوب)</div>
+    <div class="card-body">
+      <div id="mediaList"></div>
+      <div class="add-row">
+        <input type="text" id="newMediaLabel" placeholder="الاسم (اختياري)">
+        <input type="url" id="newMediaUrl" placeholder="رابط يوتيوب أو البث المباشر">
+        <button class="btn btn-primary" onclick="addMedia()">➕ إضافة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- العرض -->
+  <div class="card">
+    <div class="card-header">🎨 إعدادات العرض</div>
+    <div class="card-body">
+      <div class="grid g2">
+        <label>الخط
+          <select id="fontFamily">
+            <option value="Cairo">Cairo</option>
+            <option value="Amiri">Amiri</option>
+          </select>
+        </label>
+        <label>مدة كل ذكر (ثانية)<input type="number" id="dhikrDuration" min="10" max="120"></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- أزرار الحفظ -->
+  <div class="btn-row">
+    <button class="btn btn-danger" onclick="resetConfig()">🔄 استعادة الافتراضي</button>
+    <button class="btn btn-primary" onclick="saveConfig()">💾 حفظ وإرسال للتلفزيون</button>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ===== الإعدادات الافتراضية ===== */
+const DEF={
+  latitude:21.4170, longitude:39.8770, locationPreset:'mina',
+  orgNameAr:'شركة قريش المحدودة', orgNameEn:'Quraish Company Limited',
+  prayerOrder:['fajr','dhuhr','asr','maghrib','isha'],
+  prayerNames:{fajr:'الفجر',dhuhr:'الظهر',asr:'العصر',maghrib:'المغرب',isha:'العشاء'},
+  iqamahMinutes:{fajr:20,dhuhr:15,asr:15,maghrib:10,isha:15},
+  blackoutMinutes:{fajr:10,dhuhr:10,asr:10,maghrib:10,isha:10},
+  alertMinutes:{fajr:5,dhuhr:5,asr:5,maghrib:5,isha:5},
+  iqamahCountdownMinutes:10,
+  enablePreAlert:true, enableAdhanScreen:true, enableIqamahCountdown:true,
+  enablePrayerSilent:true, enableDhikr:true, dhikrDuration:20,
+  fontFamily:'Cairo', nightMode:false,
+  enableAnnouncement:false, announcementText:'',
+  showYoutubePanel:true,
+  logoScale:0.85, cardNameSize:4,
+};
+
+let C = JSON.parse(JSON.stringify(DEF));
+let mediaList = [];
+let db = null;
+
+/* ===== Supabase ===== */
+function initDB(){
+  if(!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY || !window.supabase) return;
+  try{
+    db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    loadFromCloud();
+    // استمع للتغييرات الواردة من التلفزيون
+    db.channel('admin_sync').on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_settings',filter:'id=eq.1'},
+      p=>{ toast('📺 التلفزيون حدّث الإعدادات','ok'); }
+    ).subscribe(s=>{ if(s==='SUBSCRIBED') setStatus(true); else setStatus(false); });
+  }catch(e){ setStatus(false); }
+}
+
+function setStatus(ok){
+  const b=document.getElementById('statusBadge'), t=document.getElementById('statusText');
+  b.className='status-badge '+(ok?'connected':'offline');
+  t.textContent=ok?'متصل بـ Supabase':'غير متصل (محلي فقط)';
+}
+
+async function loadFromCloud(){
+  if(!db){ fillUI(); return; }
+  try{
+    const {data,error}=await db.from('app_settings').select('*').eq('id',1).single();
+    if(error||!data){ fillUI(); return; }
+    if(data.config && Object.keys(data.config).length){ mergeConfig(data.config); }
+    if(data.media && Array.isArray(data.media)){ mediaList=data.media; }
+    fillUI(); renderMedia();
+    toast('✅ تم تحميل الإعدادات من السحابة','ok');
+  }catch(e){ fillUI(); }
+}
+
+async function saveConfig(){
+  readUI();
+  // محلي
+  try{ localStorage.setItem('qp_v34_cfg', JSON.stringify(C)); }catch(e){}
+  try{ localStorage.setItem('qp_v34_media', JSON.stringify(mediaList)); }catch(e){}
+  // سحابي
+  if(db){
+    const {error}=await db.from('app_settings')
+      .update({config:C, media:mediaList, updated_at:new Date().toISOString()})
+      .eq('id',1);
+    if(error){ toast('❌ فشل الحفظ: '+error.message,'err'); return; }
+    toast('✅ تم الحفظ — سيُحدَّث التلفزيون تلقائياً','ok');
+  } else {
+    toast('💾 تم الحفظ محلياً (Supabase غير متصل)','ok');
+  }
+}
+
+function resetConfig(){
+  if(!confirm('هل تريد استعادة الإعدادات الافتراضية؟')) return;
+  C = JSON.parse(JSON.stringify(DEF));
+  fillUI();
+  toast('🔄 تمت استعادة الافتراضي','ok');
+}
+
+function mergeConfig(p){
+  if(!p) return;
+  ['iqamahMinutes','blackoutMinutes','alertMinutes'].forEach(k=>{
+    if(p[k]) C[k]={...C[k],...p[k]};
+  });
+  ['enablePreAlert','enableAdhanScreen','enableIqamahCountdown','enablePrayerSilent','enableDhikr',
+   'dhikrDuration','fontFamily','nightMode','orgNameAr','orgNameEn','locationPreset',
+   'latitude','longitude','iqamahCountdownMinutes','enableAnnouncement','announcementText',
+   'showYoutubePanel','logoScale','cardNameSize'
+  ].forEach(k=>{ if(p[k]!==undefined) C[k]=p[k]; });
+}
+
+/* ===== UI ===== */
+function fillUI(){
+  const s=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v; };
+  const c=(id,v)=>{ const e=document.getElementById(id); if(e) e.checked=v; };
+  s('orgNameAr', C.orgNameAr); s('orgNameEn', C.orgNameEn);
+  s('locationPreset', C.locationPreset);
+  s('latitude', C.latitude); s('longitude', C.longitude);
+  s('iqamahCountdownMinutes', C.iqamahCountdownMinutes);
+  s('dhikrDuration', C.dhikrDuration);
+  s('fontFamily', C.fontFamily);
+  s('announcementText', C.announcementText||'');
+  c('enableAdhanScreen', C.enableAdhanScreen);
+  c('enableIqamahCountdown', C.enableIqamahCountdown);
+  c('enablePreAlert', C.enablePreAlert);
+  c('enablePrayerSilent', C.enablePrayerSilent);
+  c('enableDhikr', C.enableDhikr);
+  c('showYoutubePanel', C.showYoutubePanel!==false);
+  c('nightMode', C.nightMode);
+  c('enableAnnouncement', C.enableAnnouncement);
+  buildPrayerTable();
+}
+
+function readUI(){
+  const gv=id=>{ const e=document.getElementById(id); return e?e.value:''; };
+  const gc=id=>{ const e=document.getElementById(id); return e?e.checked:false; };
+  C.orgNameAr = gv('orgNameAr');
+  C.orgNameEn = gv('orgNameEn');
+  C.locationPreset = gv('locationPreset');
+  C.latitude = parseFloat(gv('latitude'))||21.4170;
+  C.longitude = parseFloat(gv('longitude'))||39.8770;
+  C.iqamahCountdownMinutes = parseInt(gv('iqamahCountdownMinutes'))||10;
+  C.dhikrDuration = parseInt(gv('dhikrDuration'))||20;
+  C.fontFamily = gv('fontFamily');
+  C.announcementText = gv('announcementText').trim();
+  C.enableAdhanScreen = gc('enableAdhanScreen');
+  C.enableIqamahCountdown = gc('enableIqamahCountdown');
+  C.enablePreAlert = gc('enablePreAlert');
+  C.enablePrayerSilent = gc('enablePrayerSilent');
+  C.enableDhikr = gc('enableDhikr');
+  C.showYoutubePanel = gc('showYoutubePanel');
+  C.nightMode = gc('nightMode');
+  C.enableAnnouncement = gc('enableAnnouncement');
+  C.prayerOrder.forEach(p=>{
+    const iq=parseInt(document.getElementById('iq-'+p)?.value)||15;
+    const bl=parseInt(document.getElementById('bl-'+p)?.value)||10;
+    const al=parseInt(document.getElementById('al-'+p)?.value)||5;
+    C.iqamahMinutes[p]=iq; C.blackoutMinutes[p]=bl; C.alertMinutes[p]=al;
+  });
+}
+
+function buildPrayerTable(){
+  const tb = document.getElementById('prayerTable');
+  if(!tb) return;
+  tb.innerHTML = C.prayerOrder.map(p=>`
+    <tr>
+      <td>${C.prayerNames[p]||p}</td>
+      <td><input type="number" id="iq-${p}" value="${C.iqamahMinutes[p]||15}" min="1" max="60"></td>
+      <td><input type="number" id="bl-${p}" value="${C.blackoutMinutes[p]||10}" min="1" max="60"></td>
+      <td><input type="number" id="al-${p}" value="${C.alertMinutes[p]||5}" min="1" max="30"></td>
+    </tr>`).join('');
+}
+
+/* ===== Media ===== */
+function renderMedia(){
+  const el = document.getElementById('mediaList');
+  if(!el) return;
+  if(!mediaList.length){ el.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.85rem">لا يوجد محتوى مضاف</p>'; return; }
+  el.innerHTML = mediaList.map(m=>`
+    <div class="media-item">
+      <span style="color:var(--gold);font-size:.8rem;min-width:80px">${m.label||'بدون اسم'}</span>
+      <input type="url" value="${m.url||''}" onchange="updateMediaUrl(${m.id},this.value)">
+      <button class="media-del" onclick="delMedia(${m.id})">🗑</button>
+    </div>`).join('');
+}
+
+function addMedia(){
+  const url=(document.getElementById('newMediaUrl')?.value||'').trim();
+  if(!url){ alert('أدخل رابط يوتيوب'); return; }
+  const label=(document.getElementById('newMediaLabel')?.value||'').trim()||url.substring(0,35);
+  const id=mediaList.length?Math.max(...mediaList.map(m=>m.id))+1:1;
+  mediaList.push({id,label,url,mode:'auto',durationSec:0,from:'',to:'',enabled:true});
+  document.getElementById('newMediaUrl').value='';
+  document.getElementById('newMediaLabel').value='';
+  renderMedia();
+}
+
+function delMedia(id){
+  mediaList=mediaList.filter(m=>m.id!==id); renderMedia();
+}
+
+function updateMediaUrl(id, url){
+  const m=mediaList.find(m=>m.id===id); if(m) m.url=url;
+}
+
+/* ===== Toast ===== */
+function toast(msg, type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+type;
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>{ el.className=''; },3000);
+}
+
+/* ===== Init ===== */
+window.addEventListener('DOMContentLoaded',()=>{
+  C = JSON.parse(JSON.stringify(DEF));
+  // حاول تحميل من localStorage كبديل
+  try{
+    const s=localStorage.getItem('qp_v34_cfg');
+    if(s) mergeConfig(JSON.parse(s));
+    const ms=localStorage.getItem('qp_v34_media');
+    if(ms) mediaList=JSON.parse(ms);
+  }catch(e){}
+  fillUI(); renderMedia();
+  initDB();
+});
+</script>
+</body>
+</html>
