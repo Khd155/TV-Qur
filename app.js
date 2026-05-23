@@ -309,6 +309,17 @@ function showDk(i){
 }
 function clearDkTimer(){if(dkTimeout){clearTimeout(dkTimeout);dkTimeout=null;}}
 
+/* ---- زر تخطي الذكر ---- */
+function initDhikrSkip(){
+  const btn=g('btnDhikrSkip');
+  if(!btn) return;
+  btn.addEventListener('click',()=>{
+    clearDkTimer();
+    dkIndex++;
+    showDk(dkIndex);
+  });
+}
+
 /* ---- الساعة ---- */
 function to12(t){
   if(!t||t==='--:--') return '--:--';
@@ -1412,6 +1423,7 @@ async function init(){
   await loadAllFromCloud();
 
   try{ initSettings(); }catch(e){ console.warn('initSettings err',e); }
+  try{ initDhikrSkip(); }catch(e){ console.warn('initDhikrSkip err',e); }
   try{ applyDynamic(); }catch(e){ console.warn('applyDynamic err',e); }
   try{ updateDate(); }catch(e){ console.warn('updateDate err',e); }
 

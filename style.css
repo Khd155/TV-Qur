@@ -420,13 +420,25 @@ body.ui-hidden .cfg-btn { opacity: 0 !important; pointer-events: none; }
 .dk-top  { display:flex;align-items:center;justify-content:space-between;flex-shrink:0; }
 .dk-head { font-size:clamp(18px,2.8vmin,40px);color:var(--gold);font-weight:700; }
 .dk-cnt  { background:rgba(196,168,130,.12);border:1px solid rgba(196,168,130,.25);border-radius:50px;padding:.5vh 2vw;font-size:clamp(14px,2vmin,28px);color:var(--gold-lt);font-weight:600; }
-.dk-card { flex:1;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:14px;padding:4vh 5vw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2.5vh;overflow:hidden; }
+.dk-card { flex:1;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:14px;padding:4vh 5vw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2.5vh;overflow:hidden;position:relative; }
 .dk-title { font-size:clamp(16px,2.6vmin,38px);color:var(--gold);font-weight:700;font-family:'Amiri',serif;min-height:1em; }
 .dk-text  { font-size:clamp(22px,4vmin,62px);color:var(--text);font-family:'Amiri',serif;line-height:2; }
 .dk-sub   { font-size:clamp(12px,1.7vmin,24px);color:var(--gold-lt);opacity:.65;font-family:'Amiri',serif; }
 .dk-rep   { font-size:clamp(14px,1.9vmin,28px);color:#5db3e8;background:rgba(52,152,219,.1);border:1px solid rgba(52,152,219,.25);border-radius:50px;padding:.7vh 2.5vw;font-weight:600;min-height:1em; }
 .dk-bar   { height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;flex-shrink:0; }
 .dk-prog  { height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));border-radius:3px;width:100%; }
+/* زر تخطي الذكر */
+.dk-skip  {
+  position:absolute; bottom:2.5vh; left:2.5vw;
+  width:clamp(36px,5vmin,60px); height:clamp(36px,5vmin,60px);
+  border-radius:50%; border:none; cursor:pointer;
+  background:rgba(196,168,130,.12); color:var(--gold-lt);
+  font-size:clamp(16px,2.4vmin,32px); line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  opacity:.55; transition:opacity .2s, transform .15s, background .2s;
+}
+.dk-skip:hover, .dk-skip:focus { opacity:1; background:rgba(196,168,130,.25); outline:none; }
+.dk-skip:active { transform:scale(.9); }
 
 /* ===== زر الإعدادات ===== */
 .cfg-btn {
