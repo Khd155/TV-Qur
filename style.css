@@ -98,8 +98,9 @@ body.ui-hidden .cfg-btn { opacity: 0 !important; pointer-events: none; }
   width: auto;
   border-radius: 8px;
   display: block;
-  background: #ffffff;
-  padding: 4px 8px;
+  background: transparent;
+  padding: 0;
+  mix-blend-mode: screen; /* يجعل الخلفية السوداء شفافة — يظهر الشعار فقط */
 }
 
 /* البسملة */
