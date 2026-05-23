@@ -299,6 +299,7 @@ function showDk(i){
   if(d.repeat) rep=d.repeat+' مرة'+(d.extra?' ثم: '+d.extra:'');
   else if(d.repeatFn) rep=d.repeatFn(dkPrayer);
   else if(d.repeatLabel) rep=d.repeatLabel;
+  else rep='مرة واحدة';
   set('dhikrRepeat', rep);
   set('dhikrCounter', i+1);
   set('dhikrTotal', dkList.length);
