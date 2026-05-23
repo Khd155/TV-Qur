@@ -211,8 +211,12 @@ textarea{resize:vertical;min-height:80px;}
     <div class="card-body">
       <div id="mediaList"></div>
       <div class="add-row">
-        <input type="text" id="newMediaLabel" placeholder="الاسم (اختياري)">
+        <input type="text" id="newMediaLabel" placeholder="الاسم (اختياري)" style="max-width:150px">
         <input type="url" id="newMediaUrl" placeholder="رابط يوتيوب أو البث المباشر">
+        <input type="number" id="newMediaMin" value="5" min="0" max="1440" style="width:60px;text-align:center" title="الدقائق">
+        <span style="color:rgba(255,255,255,.4);font-size:.85rem">دق</span>
+        <input type="number" id="newMediaSec" value="0" min="0" max="59" style="width:55px;text-align:center" title="الثواني">
+        <span style="color:rgba(255,255,255,.4);font-size:.85rem">ث</span>
         <button class="btn btn-primary" onclick="addMedia()">➕ إضافة</button>
       </div>
     </div>
@@ -401,22 +405,42 @@ function renderMedia(){
   const el = document.getElementById('mediaList');
   if(!el) return;
   if(!mediaList.length){ el.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.85rem">لا يوجد محتوى مضاف</p>'; return; }
-  el.innerHTML = mediaList.map(m=>`
-    <div class="media-item">
-      <span style="color:var(--gold);font-size:.8rem;min-width:80px">${m.label||'بدون اسم'}</span>
-      <input type="url" value="${m.url||''}" onchange="updateMediaUrl(${m.id},this.value)">
-      <button class="media-del" onclick="delMedia(${m.id})">🗑</button>
-    </div>`).join('');
+  el.innerHTML = mediaList.map(m=>{
+    const dm=Math.floor((m.durationSec||0)/60), ds=(m.durationSec||0)%60;
+    return `
+    <div class="media-item" style="flex-wrap:wrap;gap:.5rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;width:100%">
+        <input type="text" value="${m.label||''}" placeholder="الاسم" style="width:130px;flex-shrink:0"
+          onchange="updateMedia(${m.id},'label',this.value)">
+        <input type="url" value="${m.url||''}" placeholder="رابط يوتيوب"
+          onchange="updateMedia(${m.id},'url',this.value)">
+        <button class="media-del" onclick="delMedia(${m.id})">🗑</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:rgba(255,255,255,.5)">
+        ⏱ مدة العرض:
+        <input type="number" value="${dm}" min="0" max="1440" style="width:55px;text-align:center"
+          onchange="updateDuration(${m.id},this.value,null)" title="دقائق"> دق
+        <input type="number" value="${ds}" min="0" max="59" style="width:50px;text-align:center"
+          onchange="updateDuration(${m.id},null,this.value)" title="ثواني"> ث
+        <span style="color:rgba(255,255,255,.3)">${dm===0&&ds===0?'(يشتغل إلى الأبد)':'(ينتقل للتالي تلقائياً)'}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function addMedia(){
   const url=(document.getElementById('newMediaUrl')?.value||'').trim();
   if(!url){ alert('أدخل رابط يوتيوب'); return; }
   const label=(document.getElementById('newMediaLabel')?.value||'').trim()||url.substring(0,35);
+  const mins=parseInt(document.getElementById('newMediaMin')?.value)||0;
+  const secs=parseInt(document.getElementById('newMediaSec')?.value)||0;
+  const durationSec=mins*60+secs;
   const id=mediaList.length?Math.max(...mediaList.map(m=>m.id))+1:1;
-  mediaList.push({id,label,url,mode:'auto',durationSec:0,from:'',to:'',enabled:true});
+  mediaList.push({id,label,url,mode:'countdown',durationSec,from:'',to:'',enabled:true});
   document.getElementById('newMediaUrl').value='';
   document.getElementById('newMediaLabel').value='';
+  document.getElementById('newMediaMin').value='5';
+  document.getElementById('newMediaSec').value='0';
   renderMedia();
 }
 
@@ -424,8 +448,17 @@ function delMedia(id){
   mediaList=mediaList.filter(m=>m.id!==id); renderMedia();
 }
 
-function updateMediaUrl(id, url){
-  const m=mediaList.find(m=>m.id===id); if(m) m.url=url;
+function updateMedia(id, field, val){
+  const m=mediaList.find(m=>m.id===id); if(m) m[field]=val;
+}
+
+function updateDuration(id, mins, secs){
+  const m=mediaList.find(m=>m.id===id); if(!m) return;
+  const dm = mins!==null ? parseInt(mins)||0 : Math.floor((m.durationSec||0)/60);
+  const ds = secs!==null ? parseInt(secs)||0 : (m.durationSec||0)%60;
+  m.durationSec = dm*60+ds;
+  m.mode = (m.from&&m.to)?'timeRange':'countdown';
+  renderMedia();
 }
 
 /* ===== Toast ===== */

@@ -682,10 +682,11 @@ function playMedia(item){
 }
 
 function mediaSchedulerTick(){
-  // يبدأ تلقائياً إذا في محتوى مفعّل — أو إذا ضغط المستخدم تشغيل
+  // يبدأ تلقائياً إذا في محتوى مفعّل
   const hasEnabled=mediaList.some(m=>m.enabled&&m.url);
   if(!mediaStarted&&!hasEnabled) return;
-  if(hasEnabled) mediaStarted=true; // تشغيل تلقائي عند وجود محتوى
+  if(hasEnabled) mediaStarted=true;
+
   const enabled=mediaList.filter(m=>m.enabled&&m.url);
   if(!enabled.length){ playMedia(null); return; }
 
@@ -696,32 +697,30 @@ function mediaSchedulerTick(){
     return;
   }
 
-  // إذا كان يعزف عنصراً مجدولاً انتهى وقته → أعد للدوران
-  if(mediaCurrentId!==null){
-    const playing=mediaList.find(m=>m.id===mediaCurrentId);
-    if(playing&&playing.mode==='timeRange') mediaCurrentId=null;
-  }
-
-  // عناصر الدوران: auto + countdown (وكل ما ليس timeRange نشطاً)
+  // قائمة الدوران — كل العناصر غير timeRange
   const rot=enabled.filter(m=>m.mode!=='timeRange');
   if(!rot.length){ playMedia(null); return; }
   if(mediaRotIdx>=rot.length) mediaRotIdx=0;
 
   const cur=rot[mediaRotIdx];
 
-  // هل انتهت مدة عرض countdown (بالثواني)?
-  if(mediaCurrentId===cur.id&&cur.mode==='countdown'&&cur.durationSec>0){
-    const elapsed=(Date.now()-mediaStartTime)/1000;
-    if(elapsed>=cur.durationSec){
-      mediaRotIdx=(mediaRotIdx+1)%rot.length;
-      playMedia(rot[mediaRotIdx]); return;
+  // إذا كان يشتغل الحالي → تحقق هل انتهت مدته
+  if(mediaCurrentId===cur.id){
+    const dur=cur.durationSec||0;
+    if(dur>0){
+      const elapsed=(Date.now()-mediaStartTime)/1000;
+      if(elapsed>=dur){
+        // انتقل للتالي — دوران لا نهائي
+        mediaRotIdx=(mediaRotIdx+1)%rot.length;
+        playMedia(rot[mediaRotIdx]);
+      }
     }
+    // إذا dur=0 → يشتغل إلى الأبد حتى يتدخل المستخدم
+    return;
   }
 
-  // ابدأ التشغيل إذا لا شيء يعزف أو المعزوف ليس في قائمة الدوران
-  if(mediaCurrentId===null||!rot.find(m=>m.id===mediaCurrentId)){
-    playMedia(cur);
-  }
+  // لا شيء يشتغل أو المعزوف مو في القائمة → ابدأ
+  playMedia(cur);
 }
 
 function buildMediaUI(){
@@ -738,10 +737,10 @@ function buildMediaUI(){
     const div=document.createElement('div');
     div.className='mi-card'+(item.enabled?'':' mi-disabled');
     const meta=[];
-    if(item.mode==='countdown'&&item.durationSec>0){
+    if(item.durationSec>0){
       const dm=Math.floor(item.durationSec/60),ds=item.durationSec%60;
-      meta.push(`⏱ ${dm>0?dm+'د ':''} ${ds>0?ds+'ث':''}`.trim());
-    }
+      meta.push(`⏱ ${dm>0?dm+'د':''} ${ds>0?ds+'ث':''}`.trim());
+    } else { meta.push('⏱ بلا حد'); }
     if(item.mode==='timeRange'&&item.from&&item.to) meta.push(`🕐 ${item.from} – ${item.to}`);
     div.innerHTML=`
       <label class="mi-toggle" title="${item.enabled?'إيقاف':'تفعيل'}">
@@ -807,37 +806,26 @@ function initMedia(){
     });
   });
 
-  // تبديل حقول النموذج بحسب طريقة العرض
-  const mModeEl=g('mMode');
-  function syncModeFields(){
-    const mode=mModeEl?mModeEl.value:'auto';
-    const dw=g('mDurationWrap'),fw=g('mFromWrap'),tw=g('mToWrap');
-    if(dw) dw.style.display=mode==='countdown'?'':'none';
-    if(fw) fw.style.display=mode==='timeRange'?'':'none';
-    if(tw) tw.style.display=mode==='timeRange'?'':'none';
-  }
-  if(mModeEl) mModeEl.addEventListener('change',syncModeFields);
-  syncModeFields();
-
   // إضافة عنصر
   const addBtn=g('btnAddMedia');
   if(addBtn) addBtn.addEventListener('click',()=>{
     const url=(g('mUrl')?.value||'').trim();
     if(!url){ g('mUrl').style.borderColor='rgba(255,80,80,.6)'; setTimeout(()=>{g('mUrl').style.borderColor='';},1500); return; }
     const label=(g('mLabel')?.value||'').trim()||url.substring(0,40);
-    const mode=g('mMode')?.value||'auto';
-    const dur=parseInt(g('mDuration')?.value)||0;
-    const from=mode==='timeRange'?(g('mFrom')?.value||''):'';
-    const to=mode==='timeRange'?(g('mTo')?.value||''):'';
-    mediaList.push({id:nextMediaId(),label,url,mode,durationSec:mode==='countdown'?dur:0,from,to,enabled:true});
+    const mins=parseInt(g('mDurMin')?.value)||0;
+    const secs=parseInt(g('mDurSec')?.value)||0;
+    const durationSec=mins*60+secs;
+    const from=g('mFrom')?.value||'';
+    const to=g('mTo')?.value||'';
+    const mode=(from&&to)?'timeRange':'countdown';
+    mediaList.push({id:nextMediaId(),label,url,mode,durationSec,from,to,enabled:true});
     saveMedia(); buildMediaUI();
     if(g('mLabel')) g('mLabel').value='';
     if(g('mUrl'))   g('mUrl').value='';
-    if(g('mMode'))  g('mMode').value='auto';
-    if(g('mDuration')) g('mDuration').value='120';
+    if(g('mDurMin')) g('mDurMin').value='5';
+    if(g('mDurSec')) g('mDurSec').value='0';
     if(g('mFrom')) g('mFrom').value='';
     if(g('mTo'))   g('mTo').value='';
-    syncModeFields();
     mediaCurrentId=null; mediaSchedulerTick();
   });
 

@@ -425,26 +425,20 @@
         </div>
         <div class="grid5" style="margin-top:1vh">
           <label>
-            طريقة العرض
-            <select id="mMode">
-              <option value="auto">تلقائي (بلا حد)</option>
-              <option value="countdown">مؤقت بالثواني</option>
-              <option value="timeRange">توقيت محدد (من/إلى)</option>
-            </select>
+            مدة العرض — الدقائق
+            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">0 = يشتغل إلى الأبد</small>
+            <input type="number" id="mDurMin" value="5" min="0" max="1440">
           </label>
-          <label id="mDurationWrap" style="display:none">
-            مدة العرض (ثانية)
-            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">عدد الثواني قبل الانتقال للتالي</small>
-            <input type="number" id="mDuration" value="120" min="1" max="86400">
+          <label>
+            مدة العرض — الثواني
+            <input type="number" id="mDurSec" value="0" min="0" max="59">
           </label>
-          <label id="mFromWrap" style="display:none">
-            بداية التوقيت
-            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">اختياري</small>
+          <label id="mFromWrap">
+            بداية التوقيت (اختياري)
             <input type="time" id="mFrom">
           </label>
-          <label id="mToWrap" style="display:none">
-            نهاية التوقيت
-            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">اختياري</small>
+          <label id="mToWrap">
+            نهاية التوقيت (اختياري)
             <input type="time" id="mTo">
           </label>
         </div>
