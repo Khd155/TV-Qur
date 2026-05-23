@@ -206,7 +206,7 @@ function initRealtime(){
 
 /* ---- حفظ / تحميل الإعدادات ---- */
 function loadCfg(){
-  if(cloudLoaded) return; // تم التحميل من السحابة بالفعل
+  // يُحمَّل دائماً من localStorage كخط دفاع أول — السحابة ستتغلب لاحقاً إذا كان فيها بيانات
   try{
     const s=localStorage.getItem('qp_v34_cfg');
     if(!s) return;
@@ -1390,20 +1390,16 @@ function initTVRemote(){
 }
 
 async function init(){
-  /* ① تهيئة Supabase ② تحميل كل الإعدادات من السحابة */
+  /* ① localStorage أولاً — خط دفاع دائم بغض النظر عن السحابة */
+  try{ loadCfg(); }catch(e){ console.warn('loadCfg err',e); }
+  try{
+    const sl=localStorage.getItem('qp_v34_logo');
+    if(sl) applyLogoData(sl);
+  }catch(e){}
+
+  /* ② تهيئة Supabase — تتغلب على المحلي إذا كان فيها بيانات */
   initSupabase();
   await loadAllFromCloud();
-
-  /* ③ احتياط: localStorage إذا فشلت السحابة */
-  try{ loadCfg(); }catch(e){ console.warn('loadCfg err',e); }
-
-  /* تحميل الشعار من localStorage إذا لم يُحمَّل من السحابة */
-  if(!cloudLoaded){
-    try{
-      const sl=localStorage.getItem('qp_v34_logo');
-      if(sl) applyLogoData(sl);
-    }catch(e){}
-  }
 
   try{ initSettings(); }catch(e){ console.warn('initSettings err',e); }
   try{ applyDynamic(); }catch(e){ console.warn('applyDynamic err',e); }
