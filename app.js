@@ -643,12 +643,12 @@ function getYouTubeEmbed(url){
      - يدعم autoplay بدون قيود المتصفح
      - playsinline=1 ضروري للتشغيل داخل العنصر بدون ملء الشاشة */
   const BASE = 'https://www.youtube-nocookie.com/embed';
-  const p = 'autoplay=1&rel=0&playsinline=1';
+  const p = 'autoplay=1&mute=1&rel=0&playsinline=1';
   if(vid && list) return `${BASE}/${vid}?list=${list}&${p}`;
   if(list)        return `${BASE}/videoseries?list=${list}&${p}`;
   if(vid)         return `${BASE}/${vid}?${p}`;
   if(url.includes('youtube.com/embed') || url.includes('youtube-nocookie.com/embed'))
-    return url + (url.includes('?') ? '&' : '?') + 'autoplay=1&playsinline=1';
+    return url + (url.includes('?') ? '&' : '?') + 'autoplay=1&mute=1&playsinline=1';
   return url;
 }
 
