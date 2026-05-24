@@ -217,24 +217,68 @@ body.ui-hidden .cfg-btn { opacity: 0 !important; pointer-events: none; }
 /* الآية انتقلت خارج col-right — لا نحتاج هذا الضبط */
 
 /* ===== قائمة المحتوى في الإعدادات ===== */
+/* ===== فورم المحتوى الجديد ===== */
+.mf-row { display: flex; gap: 1.2vw; align-items: flex-end; flex-wrap: wrap; }
+.mf-label-wide { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: .35vh;
+  font-size: clamp(11px,1.3vmin,15px); color: var(--muted); }
+.mf-label-sm { display: flex; flex-direction: column; gap: .35vh;
+  font-size: clamp(11px,1.3vmin,15px); color: var(--muted); }
+.mf-label-sm small, .mf-label-wide small { font-size: .78em; opacity: .6; margin-top: .1vh; }
+.mf-dur-wrap { display: flex; align-items: center; gap: .5vw; }
+.mf-dur-wrap input { width: 62px !important; text-align: center; }
+.mf-dur-sep { font-size: clamp(11px,1.2vmin,14px); color: var(--muted); font-weight: 600; }
+
+/* أزرار نوع التشغيل */
+.mf-mode-group { display: flex; flex-direction: column; gap: .5vh; }
+.mf-mode-lbl { font-size: clamp(11px,1.3vmin,15px); color: var(--muted); }
+.mf-mode-btns { display: flex; gap: .7vw; }
+.mf-mode-btn {
+  padding: .55vh 1.4vw; border-radius: 8px; border: 1.5px solid rgba(196,168,130,.2);
+  background: rgba(255,255,255,.04); color: var(--muted);
+  font-family: var(--font); font-size: clamp(11px,1.3vmin,15px);
+  cursor: pointer; transition: all .2s;
+}
+.mf-mode-btn.active {
+  background: rgba(196,168,130,.15); border-color: var(--gold);
+  color: var(--gold-lt); font-weight: 600;
+}
+.mf-actions { display: flex; gap: 1vw; margin-top: 1.2vh; align-items: center; }
+.mf-cancel { background: rgba(255,80,80,.08) !important; border-color: rgba(255,80,80,.3) !important;
+  color: rgba(255,120,120,.8) !important; }
+
+/* رأس قائمة المحتوى */
+.mi-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4vh; }
+.mi-clear-btn { width: auto !important; padding: .45vh 1.2vw !important; font-size: clamp(10px,1.1vmin,14px) !important; }
+
+/* قائمة المحتوى */
 .media-list-ui {
-  display: flex; flex-direction: column; gap: .6vh;
-  max-height: 28vh; overflow-y: auto;
-  margin-bottom: .5vh;
-  padding-left: 2px;
+  display: flex; flex-direction: column; gap: .7vh;
+  max-height: 30vh; overflow-y: auto;
+  padding: 2px 2px 4px; margin-bottom: .5vh;
 }
 .mi-card {
-  display: flex; align-items: center; gap: 1vw;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto auto;
+  align-items: center; gap: .8vw;
   background: rgba(255,255,255,.04);
-  border: 1px solid rgba(196,168,130,.14);
-  border-radius: 9px; padding: .7vh 1vw;
-  transition: opacity .2s;
+  border: 1.5px solid rgba(196,168,130,.14);
+  border-radius: 10px; padding: .75vh 1vw;
+  transition: opacity .2s, border-color .2s;
 }
-.mi-card.mi-disabled { opacity: .45; }
-.mi-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2vh; }
+.mi-card.mi-editing { border-color: var(--gold); background: rgba(196,168,130,.06); }
+.mi-card.mi-disabled { opacity: .42; }
+.mi-num { font-size: clamp(10px,1.1vmin,13px); color: var(--muted); min-width: 1.4ch; text-align: center; }
+.mi-info { min-width: 0; display: flex; flex-direction: column; gap: .25vh; }
 .mi-label { font-size: clamp(12px,1.5vmin,18px); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mi-meta  { font-size: clamp(10px,1.1vmin,14px); color: var(--muted); }
-.mi-empty { color: var(--muted); padding: 1.5vh; text-align: center; font-size: clamp(12px,1.4vmin,17px); }
+.mi-meta  { display: flex; flex-wrap: wrap; gap: .3vw; }
+.mi-badge {
+  font-size: clamp(9px,1vmin,12px); padding: .15vh .6vw;
+  border-radius: 20px; white-space: nowrap;
+}
+.mi-badge-auto  { background: rgba(196,168,130,.15); color: var(--gold-lt); }
+.mi-badge-time  { background: rgba(120,180,255,.12); color: rgba(160,210,255,.85); }
+.mi-badge-dur   { background: rgba(255,255,255,.07); color: var(--muted); }
+.mi-empty { color: var(--muted); padding: 2vh; text-align: center; font-size: clamp(12px,1.4vmin,17px); }
 .mi-count-badge { font-size: .8em; color: var(--muted); font-weight: 400; }
 
 /* toggle switch */
@@ -253,8 +297,10 @@ body.ui-hidden .cfg-btn { opacity: 0 !important; pointer-events: none; }
 .mi-toggle input:checked ~ .mi-toggle-track { background: rgba(196,168,130,.5); }
 .mi-toggle input:checked ~ .mi-toggle-track::after { transform: translateX(-16px); background: var(--gold); }
 
-.mi-play { width: auto !important; padding: .4vh .9vw !important; font-size: clamp(11px,1.2vmin,15px) !important; flex-shrink: 0; }
-.mi-del  { width: auto !important; padding: .4vh .9vw !important; font-size: clamp(11px,1.2vmin,15px) !important; flex-shrink: 0; }
+.mi-play { width: auto !important; padding: .4vh .8vw !important; font-size: clamp(11px,1.2vmin,14px) !important; flex-shrink: 0; }
+.mi-edit { width: auto !important; padding: .4vh .8vw !important; font-size: clamp(11px,1.2vmin,14px) !important; flex-shrink: 0;
+  background: rgba(196,168,130,.08) !important; border-color: rgba(196,168,130,.25) !important; color: var(--gold) !important; }
+.mi-del  { width: auto !important; padding: .4vh .8vw !important; font-size: clamp(11px,1.2vmin,14px) !important; flex-shrink: 0; }
 
 /* شريط الصلاة القادمة */
 .next-bar {
@@ -606,7 +652,9 @@ body.mouse-mode .pre-btn,
 body.mouse-mode .upload-btn,
 body.mouse-mode .mi-toggle,
 body.mouse-mode .mi-play,
+body.mouse-mode .mi-edit,
 body.mouse-mode .mi-del,
+body.mouse-mode .mf-mode-btn,
 body.mouse-mode .dk-lbl,
 body.mouse-mode input[type="checkbox"],
 body.mouse-mode input[type="file"],

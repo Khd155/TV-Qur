@@ -399,7 +399,7 @@
     <!-- ===== المحتوى (يوتيوب) ===== -->
     <div class="tab-pane" id="tab-media">
 
-      <!-- إظهار / إخفاء لوحة يوتيوب -->
+      <!-- إعدادات العرض -->
       <div class="sec">
         <h3>إعدادات العرض</h3>
         <div class="chks">
@@ -409,48 +409,82 @@
 
       <!-- اختصارات سريعة -->
       <div class="sec">
-        <h3>اختصارات سريعة</h3>
+        <h3>اختصارات سريعة — أضف بضغطة</h3>
         <div class="presets">
-          <button class="pre-btn" data-mlabel="🕋 الحرم المكي" data-murl="https://www.youtube.com/watch?v=f7pTRbbwjfc">🕋 الحرم المكي</button>
-          <button class="pre-btn" data-mlabel="🕌 المسجد النبوي" data-murl="https://www.youtube.com/watch?v=XNXwnP5EYkc">🕌 المسجد النبوي</button>
+          <button class="pre-btn" data-mlabel="🕋 الحرم المكي"     data-murl="https://www.youtube.com/watch?v=f7pTRbbwjfc">🕋 الحرم المكي</button>
+          <button class="pre-btn" data-mlabel="🕌 المسجد النبوي"   data-murl="https://www.youtube.com/watch?v=XNXwnP5EYkc">🕌 المسجد النبوي</button>
+          <button class="pre-btn" data-mlabel="📢 توجيهات قريش"   data-murl="https://youtu.be/M2fFO9tUXak?si=9v1EItUVCae658qU">📢 توجيهات قريش</button>
         </div>
       </div>
 
-      <!-- إضافة مقطع -->
-      <div class="sec">
-        <h3>إضافة مقطع أو قائمة تشغيل</h3>
-        <div class="grid5" style="grid-template-columns:1fr 1fr">
-          <label>الاسم<input type="text" id="mLabel" placeholder="مثال: بث الحرم المكي"></label>
-          <label>رابط يوتيوب<input type="url" id="mUrl" placeholder="https://youtube.com/watch?v=..."></label>
+      <!-- فورم الإضافة / التعديل -->
+      <div class="sec" id="mediaFormSec">
+        <h3 id="mediaFormTitle">➕ إضافة مقطع</h3>
+
+        <!-- السطر الأول: اسم + رابط -->
+        <div class="mf-row">
+          <label class="mf-label-wide">
+            الاسم
+            <input type="text" id="mLabel" placeholder="مثال: توجيهات قريش">
+          </label>
+          <label class="mf-label-wide">
+            رابط يوتيوب
+            <input type="url" id="mUrl" placeholder="https://youtu.be/...">
+          </label>
         </div>
-        <div class="grid5" style="margin-top:1vh">
-          <label>
-            مدة العرض — الدقائق
-            <small style="display:block;opacity:.5;font-size:.82em;margin-bottom:.3vh">0 = يشتغل إلى الأبد</small>
-            <input type="number" id="mDurMin" value="5" min="0" max="1440">
+
+        <!-- السطر الثاني: نوع التشغيل -->
+        <div class="mf-row" style="margin-top:.9vh">
+          <div class="mf-mode-group">
+            <span class="mf-mode-lbl">نوع التشغيل</span>
+            <div class="mf-mode-btns">
+              <button type="button" class="mf-mode-btn active" id="mModeAuto"  data-mode="auto">🔄 تلقائي (تناوب)</button>
+              <button type="button" class="mf-mode-btn"        id="mModeTime"  data-mode="timeRange">🕐 في وقت محدد</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- مدة العرض — تظهر في وضع تلقائي فقط -->
+        <div class="mf-row" id="mDurRow" style="margin-top:.9vh">
+          <label class="mf-label-sm">
+            مدة العرض
+            <small>0 = بلا حد</small>
+            <div class="mf-dur-wrap">
+              <input type="number" id="mDurMin" value="5" min="0" max="1440" placeholder="0">
+              <span class="mf-dur-sep">د</span>
+              <input type="number" id="mDurSec" value="0"  min="0" max="59"   placeholder="0">
+              <span class="mf-dur-sep">ث</span>
+            </div>
           </label>
-          <label>
-            مدة العرض — الثواني
-            <input type="number" id="mDurSec" value="0" min="0" max="59">
-          </label>
-          <label id="mFromWrap">
-            بداية التوقيت (اختياري)
+        </div>
+
+        <!-- وقت البداية والنهاية — تظهر في وضع التوقيت فقط -->
+        <div class="mf-row" id="mTimeRow" style="margin-top:.9vh;display:none">
+          <label class="mf-label-sm">
+            من الساعة
             <input type="time" id="mFrom">
           </label>
-          <label id="mToWrap">
-            نهاية التوقيت (اختياري)
+          <label class="mf-label-sm">
+            إلى الساعة
             <input type="time" id="mTo">
           </label>
         </div>
-        <button class="tbtn" id="btnAddMedia" style="margin-top:1.2vh">+ إضافة للقائمة</button>
+
+        <!-- أزرار الحفظ / إلغاء التعديل -->
+        <div class="mf-actions">
+          <button class="tbtn" id="btnAddMedia">➕ إضافة</button>
+          <button class="tbtn mf-cancel" id="btnCancelEdit" style="display:none">✕ إلغاء التعديل</button>
+        </div>
       </div>
 
       <!-- قائمة المحتوى الحالية -->
       <div class="sec">
-        <h3>قائمة المحتوى <span id="mediaCountBadge" class="mi-count-badge"></span></h3>
-        <p class="note">العناصر بدون توقيت تتناوب تلقائياً حسب المدة المحددة. العناصر بتوقيت تُعزف في وقتها وتأخذ الأولوية.</p>
+        <div class="mi-header-row">
+          <h3>قائمة المحتوى <span id="mediaCountBadge" class="mi-count-badge"></span></h3>
+          <button class="tbtn danger mi-clear-btn" id="btnClearMedia">✕ مسح الكل</button>
+        </div>
+        <p class="note">العناصر التلقائية تتناوب حسب المدة. العناصر بتوقيت تُعزف في وقتها وتأخذ الأولوية.</p>
         <div id="mediaItemsList" class="media-list-ui"></div>
-        <button class="tbtn danger" id="btnClearMedia" style="margin-top:1vh;width:auto;padding:.6vh 2vw">✕ مسح القائمة كلها</button>
       </div>
 
     </div><!-- /tab-media -->

@@ -609,7 +609,8 @@ let mediaStarted=false;
 let mediaAdvanceTimer=null; // مؤقت الانتقال التلقائي للفيديو التالي
 
 const MEDIA_DEFAULTS=[
-  {id:1,label:'🕋 البث المباشر',url:'https://www.youtube.com/live/fZvuHkHYaXk?si=hGpNGhGVeNdSpL68',mode:'auto',durationSec:0,from:'',to:'',enabled:true},
+  {id:1,label:'🕋 البث المباشر',   url:'https://www.youtube.com/live/fZvuHkHYaXk?si=hGpNGhGVeNdSpL68', mode:'auto',durationSec:0,  from:'',to:'',enabled:true},
+  {id:2,label:'📢 توجيهات قريش', url:'https://youtu.be/M2fFO9tUXak?si=9v1EItUVCae658qU',               mode:'auto',durationSec:300,from:'',to:'',enabled:true},
 ];
 
 function loadMedia(){
@@ -771,33 +772,50 @@ function buildMediaUI(){
   if(badge) badge.textContent=mediaList.length?`(${mediaList.length})`:'';
   list.innerHTML='';
   if(!mediaList.length){
-    list.innerHTML='<div class="mi-empty">لا يوجد محتوى — أضف روابط يوتيوب من الأعلى</div>';
+    list.innerHTML='<div class="mi-empty">لا يوجد محتوى — أضف رابط يوتيوب من الأعلى</div>';
     return;
   }
-  mediaList.forEach(item=>{
+  const editingId=window._editingMediaId?window._editingMediaId():null;
+
+  mediaList.forEach((item,idx)=>{
     const div=document.createElement('div');
-    div.className='mi-card'+(item.enabled?'':' mi-disabled');
-    const meta=[];
+    let cls='mi-card';
+    if(!item.enabled) cls+=' mi-disabled';
+    if(item.id===editingId) cls+=' mi-editing';
+    div.className=cls;
+
+    // بادجات المعلومات
+    let badges='';
+    if(item.mode==='timeRange'&&item.from&&item.to){
+      badges+=`<span class="mi-badge mi-badge-time">🕐 ${item.from}–${item.to}</span>`;
+    } else {
+      badges+=`<span class="mi-badge mi-badge-auto">🔄 تلقائي</span>`;
+    }
     if(item.durationSec>0){
       const dm=Math.floor(item.durationSec/60),ds=item.durationSec%60;
-      meta.push(`⏱ ${dm>0?dm+'د':''} ${ds>0?ds+'ث':''}`.trim());
-    } else { meta.push('⏱ بلا حد'); }
-    if(item.mode==='timeRange'&&item.from&&item.to) meta.push(`🕐 ${item.from} – ${item.to}`);
+      badges+=`<span class="mi-badge mi-badge-dur">⏱ ${dm>0?dm+'د ':''} ${ds>0?ds+'ث':''}`.trim()+'</span>';
+    } else if(item.mode!=='timeRange'){
+      badges+=`<span class="mi-badge mi-badge-dur">⏱ بلا حد</span>`;
+    }
+
     div.innerHTML=`
-      <label class="mi-toggle" title="${item.enabled?'إيقاف':'تفعيل'}">
+      <span class="mi-num">${idx+1}</span>
+      <label class="mi-toggle" title="${item.enabled?'إيقاف':'تشغيل'}">
         <input type="checkbox" data-mid="${item.id}" ${item.enabled?'checked':''}>
         <span class="mi-toggle-track"></span>
       </label>
       <div class="mi-info">
         <span class="mi-label">${escHtml(item.label||'بدون اسم')}</span>
-        ${meta.length?`<span class="mi-meta">${meta.join(' &nbsp;|&nbsp; ')}</span>`:`<span class="mi-meta">${item.mode==='countdown'?'مؤقت (بلا مدة)':item.mode==='timeRange'?'توقيت محدد':'دوران تلقائي'}</span>`}
+        <span class="mi-meta">${badges}</span>
       </div>
-      <button class="mi-play tbtn" data-mid="${item.id}" title="تشغيل الآن">▶</button>
-      <button class="mi-del tbtn danger" data-mid="${item.id}" title="حذف">✕</button>
+      <button class="mi-play tbtn"          data-mid="${item.id}" title="تشغيل الآن">▶</button>
+      <button class="mi-edit tbtn"          data-mid="${item.id}" title="تعديل">✏️</button>
+      <button class="mi-del  tbtn danger"   data-mid="${item.id}" title="حذف">✕</button>
     `;
     list.appendChild(div);
   });
 
+  // toggle تفعيل/إيقاف
   list.querySelectorAll('input[data-mid]').forEach(cb=>{
     cb.addEventListener('change',()=>{
       const id=parseInt(cb.dataset.mid);
@@ -805,12 +823,14 @@ function buildMediaUI(){
       if(item){ item.enabled=cb.checked; saveMedia(); buildMediaUI(); mediaCurrentId=null; mediaSchedulerTick(); }
     });
   });
+
+  // تشغيل الآن
   list.querySelectorAll('.mi-play').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const id=parseInt(btn.dataset.mid);
       const item=mediaList.find(m=>m.id===id);
       if(item){
-        mediaStarted=true;  // المستخدم بدأ التشغيل يدوياً — يُفعَّل الجدول الزمني من الآن
+        mediaStarted=true;
         mediaCurrentId=null;
         playMedia(item);
         g('settingsPanel').style.display='none';
@@ -818,6 +838,16 @@ function buildMediaUI(){
       }
     });
   });
+
+  // تعديل
+  list.querySelectorAll('.mi-edit').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=parseInt(btn.dataset.mid);
+      if(window._startEditMedia) window._startEditMedia(id);
+    });
+  });
+
+  // حذف
   list.querySelectorAll('.mi-del').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const id=parseInt(btn.dataset.mid);
@@ -838,16 +868,78 @@ function sizeVideo(){ /* no-op */ }
 function initMedia(){
   loadMedia();
 
+  // ===== نوع التشغيل: تلقائي / توقيت محدد =====
+  let mediaFormMode='auto'; // الوضع الافتراضي
+  let editingMediaId=null;  // null = إضافة جديدة، رقم = تعديل
+
+  function setFormMode(mode){
+    mediaFormMode=mode;
+    g('mModeAuto').classList.toggle('active', mode==='auto');
+    g('mModeTime').classList.toggle('active', mode==='timeRange');
+    const dr=g('mDurRow'),tr=g('mTimeRow');
+    if(dr) dr.style.display = mode==='auto'?'':'none';
+    if(tr) tr.style.display = mode==='timeRange'?'':'none';
+  }
+
+  [g('mModeAuto'),g('mModeTime')].forEach(btn=>{
+    if(!btn) return;
+    btn.addEventListener('click',()=> setFormMode(btn.dataset.mode));
+  });
+  setFormMode('auto'); // تطبيق الوضع الافتراضي
+
+  // دالة مسح الفورم
+  function clearMediaForm(){
+    editingMediaId=null;
+    if(g('mLabel'))  g('mLabel').value='';
+    if(g('mUrl'))    g('mUrl').value='';
+    if(g('mDurMin')) g('mDurMin').value='5';
+    if(g('mDurSec')) g('mDurSec').value='0';
+    if(g('mFrom'))   g('mFrom').value='';
+    if(g('mTo'))     g('mTo').value='';
+    setFormMode('auto');
+    const addBtn=g('btnAddMedia'), cancelBtn=g('btnCancelEdit'), title=g('mediaFormTitle');
+    if(addBtn)    addBtn.textContent='➕ إضافة';
+    if(cancelBtn) cancelBtn.style.display='none';
+    if(title)     title.textContent='➕ إضافة مقطع';
+    buildMediaUI(); // إزالة تمييز التعديل
+  }
+
+  // دالة تعبئة الفورم للتعديل
+  function startEditMedia(id){
+    const item=mediaList.find(m=>m.id===id);
+    if(!item) return;
+    editingMediaId=id;
+    if(g('mLabel'))  g('mLabel').value=item.label||'';
+    if(g('mUrl'))    g('mUrl').value=item.url||'';
+    const dm=Math.floor((item.durationSec||0)/60), ds=(item.durationSec||0)%60;
+    if(g('mDurMin')) g('mDurMin').value=dm;
+    if(g('mDurSec')) g('mDurSec').value=ds;
+    if(g('mFrom'))   g('mFrom').value=item.from||'';
+    if(g('mTo'))     g('mTo').value=item.to||'';
+    setFormMode(item.mode==='timeRange'?'timeRange':'auto');
+    const addBtn=g('btnAddMedia'), cancelBtn=g('btnCancelEdit'), title=g('mediaFormTitle');
+    if(addBtn)    addBtn.textContent='💾 حفظ التعديل';
+    if(cancelBtn) cancelBtn.style.display='';
+    if(title)     title.textContent='✏️ تعديل المقطع';
+    // مرر للفورم
+    g('mediaFormSec')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    buildMediaUI(); // تلوين الصف المحرَّر
+  }
+
+  // زر إلغاء التعديل
+  const cancelBtn=g('btnCancelEdit');
+  if(cancelBtn) cancelBtn.addEventListener('click', clearMediaForm);
+
   // اختصارات سريعة
   document.querySelectorAll('[data-mlabel]').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const lbl=g('mLabel'), url=g('mUrl');
-      if(lbl) lbl.value=btn.dataset.mlabel;
-      if(url) url.value=btn.dataset.murl;
+      clearMediaForm();
+      if(g('mLabel')) g('mLabel').value=btn.dataset.mlabel;
+      if(g('mUrl'))   g('mUrl').value=btn.dataset.murl;
     });
   });
 
-  // إضافة عنصر
+  // إضافة / حفظ تعديل
   const addBtn=g('btnAddMedia');
   if(addBtn) addBtn.addEventListener('click',()=>{
     const url=(g('mUrl')?.value||'').trim();
@@ -858,16 +950,22 @@ function initMedia(){
     const durationSec=mins*60+secs;
     const from=g('mFrom')?.value||'';
     const to=g('mTo')?.value||'';
-    const mode=(from&&to)?'timeRange':'countdown';
-    mediaList.push({id:nextMediaId(),label,url,mode,durationSec,from,to,enabled:true});
-    saveMedia(); buildMediaUI();
-    if(g('mLabel')) g('mLabel').value='';
-    if(g('mUrl'))   g('mUrl').value='';
-    if(g('mDurMin')) g('mDurMin').value='5';
-    if(g('mDurSec')) g('mDurSec').value='0';
-    if(g('mFrom')) g('mFrom').value='';
-    if(g('mTo'))   g('mTo').value='';
-    mediaCurrentId=null; mediaSchedulerTick();
+    const mode=mediaFormMode==='timeRange'&&from&&to?'timeRange':'auto';
+
+    if(editingMediaId!==null){
+      // تعديل عنصر موجود
+      const idx=mediaList.findIndex(m=>m.id===editingMediaId);
+      if(idx>=0){
+        mediaList[idx]={...mediaList[idx],label,url,mode,durationSec,from,to};
+        if(mediaCurrentId===editingMediaId) mediaCurrentId=null; // أعد التشغيل بالإعدادات الجديدة
+      }
+    } else {
+      // إضافة جديدة
+      mediaList.push({id:nextMediaId(),label,url,mode,durationSec,from,to,enabled:true});
+    }
+    saveMedia();
+    clearMediaForm();
+    mediaSchedulerTick();
   });
 
   // مسح الكل
@@ -880,6 +978,10 @@ function initMedia(){
   buildMediaUI();
   mediaSchedulerTick();
   // ✅ setTimeout فقط — لا setInterval لأن playMedia يجدول بنفسه
+
+  // تصدير startEditMedia للاستخدام في buildMediaUI
+  window._startEditMedia=startEditMedia;
+  window._editingMediaId=()=>editingMediaId;
 }
 
 /* ================================================================
