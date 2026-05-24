@@ -31,7 +31,7 @@ const DEF={
   orgNameAr:'شركة قريش المحدودة', orgNameEn:'Quraish Company Limited',
   prayerNames:{fajr:'الفجر',dhuhr:'الظهر',asr:'العصر',maghrib:'المغرب',isha:'العشاء'},
   prayerOrder:['fajr','dhuhr','asr','maghrib','isha'],
-  iqamahMinutes:{fajr:20,dhuhr:15,asr:15,maghrib:10,isha:15},
+  iqamahMinutes:{fajr:20,dhuhr:0,asr:0,maghrib:10,isha:10},
   blackoutMinutes:{fajr:10,dhuhr:10,asr:10,maghrib:10,isha:10},
   alertMinutes:{fajr:5,dhuhr:5,asr:5,maghrib:5,isha:5},
   iqamahCountdownMinutes:10,
@@ -428,7 +428,9 @@ function displayP(){
 function updateIqamahDisplay(){
   C.prayerOrder.forEach(p=>{
     const e=g('iqamah-val-'+p);if(!e)return;
-    const mins=C.iqamahMinutes[p]||15;
+    const mins=C.iqamahMinutes[p]??0;
+    // إذا 0 دقيقة → "مباشرة"
+    if(mins===0){ e.textContent='مباشرة'; return; }
     if(pTimes[p]&&pTimes[p]!=='--:--'){
       const pts=pTimes[p].split(':');
       let h=parseInt(pts[0]),m=parseInt(pts[1])+mins;
