@@ -1005,10 +1005,15 @@ function initAutoHide(){
     hideTimer=setTimeout(()=>{
       document.body.classList.add('ui-hidden');
       ensureCursor(false);
-    }, 5000);
+    }, 15000); // 15 ثانية — وقت كافٍ للتلفزيون
   }
 
-  document.addEventListener('mousemove', onMouseMove);
+  // mousemove + mousedown + pointerdown + click كلها تُظهر الـ UI
+  // مهم على Android TV: الكليك قد يأتي بدون mousemove سابق
+  document.addEventListener('mousemove',  onMouseMove);
+  document.addEventListener('mousedown',  onMouseMove);
+  document.addEventListener('pointerdown',onMouseMove);
+  document.addEventListener('click',      onMouseMove);
 
   /* استخدام أسهم الريموت → الخروج من وضع الماوس */
   document.addEventListener('keydown', e=>{
