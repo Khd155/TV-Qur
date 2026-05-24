@@ -611,6 +611,7 @@ let mediaAdvanceTimer=null; // مؤقت الانتقال التلقائي للف
 const MEDIA_DEFAULTS=[
   {id:1,label:'🕋 البث المباشر',   url:'https://www.youtube.com/live/fZvuHkHYaXk?si=hGpNGhGVeNdSpL68', mode:'auto',durationSec:0,  from:'',to:'',enabled:true},
   {id:2,label:'📢 توجيهات قريش', url:'https://youtu.be/M2fFO9tUXak?si=9v1EItUVCae658qU',               mode:'auto',durationSec:300,from:'',to:'',enabled:true},
+  {id:3,label:'📢 مقطع قريش',     url:'https://youtu.be/ZWDcdpSzqNY?si=33bLRYC5PgH0AuRL',              mode:'auto',durationSec:70, from:'',to:'',enabled:true},
 ];
 
 function loadMedia(){
