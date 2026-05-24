@@ -100,7 +100,7 @@ body.ui-hidden .cfg-btn { opacity: 0 !important; pointer-events: none; }
   display: block;
   background: transparent;
   padding: 0;
-  mix-blend-mode: screen; /* يجعل الخلفية السوداء شفافة — يظهر الشعار فقط */
+  /* لا mix-blend-mode — يثقّل GPU التلفزيون. الخلفية تُزال بـ Canvas عند التحميل */
 }
 
 /* البسملة */

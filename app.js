@@ -148,11 +148,38 @@ function applyConfig(p){
   ].forEach(k=>{ if(p[k]!==undefined) C[k]=p[k]; });
 }
 
+/* إزالة الخلفية السوداء من الشعار بـ Canvas (مرة واحدة عند التحميل — لا GPU overhead) */
+function removeBlackBg(src, cb){
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=function(){
+    try{
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth; c.height=img.naturalHeight;
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0);
+      const d=ctx.getImageData(0,0,c.width,c.height);
+      const px=d.data;
+      for(let i=0;i<px.length;i+=4){
+        // اجعل البيكسلات الداكنة جداً شفافة
+        if(px[i]<40 && px[i+1]<40 && px[i+2]<40) px[i+3]=0;
+      }
+      ctx.putImageData(d,0,0);
+      cb(c.toDataURL('image/png'));
+    }catch(e){ cb(src); } // إذا فشل Canvas (CORS) رجّع الأصلي
+  };
+  img.onerror=function(){ cb(src); };
+  img.src=src;
+}
+
 /* تطبيق الشعار على الصفحة */
 function applyLogoData(data){
   if(!data) return;
-  const li=g('companyLogo'); if(li) li.src=data;
-  const lp=g('logoPreview'); if(lp) lp.src=data;
+  // إذا كانت بيانات base64 أو صورة — نزيل الخلفية السوداء أولاً
+  removeBlackBg(data, function(clean){
+    const li=g('companyLogo'); if(li) li.src=clean;
+    const lp=g('logoPreview'); if(lp) lp.src=clean;
+  });
 }
 
 /* تحميل كل شيء من السحابة مرة واحدة عند التشغيل */
@@ -643,7 +670,8 @@ function getYouTubeEmbed(url){
      - يدعم autoplay بدون قيود المتصفح
      - playsinline=1 ضروري للتشغيل داخل العنصر بدون ملء الشاشة */
   const BASE = 'https://www.youtube-nocookie.com/embed';
-  const p = 'autoplay=1&mute=1&rel=0&playsinline=1';
+  // iv_load_policy=3 يخفي التعليقات التوضيحية | cc_load_policy=0 يخفي الترجمة | modestbranding=1 يخفي شعار YouTube
+  const p = 'autoplay=1&mute=1&rel=0&playsinline=1&controls=0&iv_load_policy=3&cc_load_policy=0&modestbranding=1&disablekb=1';
   if(vid && list) return `${BASE}/${vid}?list=${list}&${p}`;
   if(list)        return `${BASE}/videoseries?list=${list}&${p}`;
   if(vid)         return `${BASE}/${vid}?${p}`;
@@ -673,13 +701,18 @@ function playMedia(item){
 
   if(!item||!item.url){
     if(aspect) aspect.style.display='none';
-    if(frame) frame.src='';
+    if(frame){ frame.src='about:blank'; }  // تحرير ذاكرة YouTube تماماً
     if(empty) empty.style.display='flex';
     mediaCurrentId=null; return;
   }
 
   // لا تعيد تحميل نفس الفيديو
-  if(mediaCurrentId===item.id) return;
+  if(mediaCurrentId===item.id){
+    const _d=(item.durationSec||0)*1000;
+    if(_d>0 && !mediaAdvanceTimer)
+      mediaAdvanceTimer=setTimeout(()=>{ mediaAdvanceNext(); }, _d);
+    return;
+  }
 
   if(frame) frame.src=getYouTubeEmbed(item.url);
   if(aspect) aspect.style.display='flex';
@@ -846,7 +879,7 @@ function initMedia(){
 
   buildMediaUI();
   mediaSchedulerTick();
-  setInterval(mediaSchedulerTick, 30000);
+  // ✅ setTimeout فقط — لا setInterval لأن playMedia يجدول بنفسه
 }
 
 /* ================================================================
@@ -1100,8 +1133,8 @@ function applyDynamic(){
 
 /* ---- Watchdog ---- */
 function startWatchdog(){
-  // يرلود فقط إذا توقفت الساعة أكثر من دقيقتين (120 ثانية) — بعيداً عن الأخطاء العرضية
-  setInterval(()=>{if(Date.now()-lastPing>120000){location.reload();}},15000);
+  // يعيد التحميل فقط إذا توقفت الساعة 10 دقائق كاملة — منع الـ reload العشوائي
+  setInterval(()=>{if(Date.now()-lastPing>600000){location.reload();}},60000);
 }
 // لا تعيد تحميل الصفحة على كل خطأ — فقط سجّل في الكنسول
 window.onerror=(msg,src,line,col,err)=>{console.warn('[onerror]',msg,src,line);return true;};
