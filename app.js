@@ -672,13 +672,18 @@ function getYouTubeEmbed(url){
      - يدعم autoplay بدون قيود المتصفح
      - playsinline=1 ضروري للتشغيل داخل العنصر بدون ملء الشاشة */
   const BASE = 'https://www.youtube-nocookie.com/embed';
-  // iv_load_policy=3 يخفي التعليقات التوضيحية | cc_load_policy=0 يخفي الترجمة | modestbranding=1 يخفي شعار YouTube
-  const p = 'autoplay=1&mute=1&rel=0&playsinline=1&controls=0&iv_load_policy=3&cc_load_policy=0&modestbranding=1&disablekb=1';
+  // origin يخبر YouTube بمصدر الصفحة الحقيقي — يمنع رسالة "تأكيد أنك لست روبوت"
+  const origin = encodeURIComponent(
+    (typeof location!=='undefined' && location.origin && location.origin!=='null')
+      ? location.origin
+      : 'https://appassets.androidplatform.net'
+  );
+  const p = `autoplay=1&mute=1&rel=0&playsinline=1&controls=0&iv_load_policy=3&cc_load_policy=0&modestbranding=1&disablekb=1&origin=${origin}`;
   if(vid && list) return `${BASE}/${vid}?list=${list}&${p}`;
   if(list)        return `${BASE}/videoseries?list=${list}&${p}`;
   if(vid)         return `${BASE}/${vid}?${p}`;
   if(url.includes('youtube.com/embed') || url.includes('youtube-nocookie.com/embed'))
-    return url + (url.includes('?') ? '&' : '?') + 'autoplay=1&mute=1&playsinline=1';
+    return url + (url.includes('?') ? '&' : '?') + `autoplay=1&mute=1&playsinline=1&origin=${origin}`;
   return url;
 }
 
