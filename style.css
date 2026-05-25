@@ -519,8 +519,20 @@ body { pointer-events: auto !important; }
 .cfg-panel[style*="display:none"]{display:none!important;}
 .cfg-panel:not([style*="display:none"]){display:flex;}
 
-.cfg-hdr{display:flex;align-items:center;justify-content:space-between;padding:1.8vh 3vw;border-bottom:1px solid rgba(196,168,130,.12);}
-.cfg-hdr h2{color:var(--gold);font-size:clamp(16px,2.4vmin,32px);font-weight:700;}
+.cfg-hdr{display:flex;align-items:center;gap:1vw;padding:1.4vh 2vw;border-bottom:1px solid rgba(196,168,130,.12);}
+.cfg-hdr h2{color:var(--gold);font-size:clamp(16px,2.4vmin,32px);font-weight:700;flex:1;}
+/* زر الحفظ في الهيدر — أول شيء يصله الريموت */
+.save-btn-top{
+  flex:0 0 auto;
+  padding:.7vh 2vw !important;
+  font-size:clamp(12px,1.6vmin,20px) !important;
+  border-radius:9px !important;
+  background:linear-gradient(135deg,var(--gold-dk),var(--gold)) !important;
+  border:none; color:#000 !important; font-weight:800;
+  cursor:pointer; transition:all .2s;
+  box-shadow:0 2px 8px rgba(196,168,130,.3);
+}
+.save-btn-top:hover,.save-btn-top:focus{transform:translateY(-1px);filter:brightness(1.12);outline:none;}
 .cfg-x{width:clamp(30px,4vmin,48px);height:clamp(30px,4vmin,48px);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:50%;color:rgba(255,255,255,.7);font-size:clamp(16px,2.4vmin,32px);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .cfg-x:hover{background:rgba(255,50,50,.2);color:#ff7070;}
 

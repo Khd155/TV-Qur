@@ -1107,11 +1107,15 @@ function initSettings(){
     }
   });
 
-  if(saveBtn) saveBtn.addEventListener('click',()=>{
+  function doSave(){
     readUI(); saveCfg(); applyDynamic();
     if(panel)panel.style.display='none'; ensureCursor(false);
     updatePrayerLocal(); tryAPI();
-  });
+  }
+  if(saveBtn) saveBtn.addEventListener('click', doSave);
+  // زر الحفظ العلوي في الهيدر (نفس الوظيفة)
+  const saveBtnTop=g('btnSaveSettingsTop');
+  if(saveBtnTop) saveBtnTop.addEventListener('click', doSave);
 
   if(resetBtn) resetBtn.addEventListener('click',()=>{
     C=JSON.parse(JSON.stringify(DEF)); localStorage.removeItem('qp_v34_cfg');
