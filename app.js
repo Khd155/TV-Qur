@@ -31,7 +31,9 @@ const DEF={
   orgNameAr:'شركة قريش المحدودة', orgNameEn:'Quraish Company Limited',
   prayerNames:{fajr:'الفجر',dhuhr:'الظهر',asr:'العصر',maghrib:'المغرب',isha:'العشاء'},
   prayerOrder:['fajr','dhuhr','asr','maghrib','isha'],
-  iqamahMinutes:{fajr:20,dhuhr:0,asr:0,maghrib:10,isha:10},
+  iqamahMinutes:{fajr:20,dhuhr:4,asr:4,maghrib:10,isha:10},
+  // صلوات تُعرض "مباشرة" في الكارت بغض النظر عن iqamahMinutes الفعلي
+  iqamahImmediate:['dhuhr','asr'],
   blackoutMinutes:{fajr:10,dhuhr:10,asr:10,maghrib:10,isha:10},
   alertMinutes:{fajr:5,dhuhr:5,asr:5,maghrib:5,isha:5},
   iqamahCountdownMinutes:10,
@@ -433,7 +435,8 @@ function updateIqamahDisplay(){
   C.prayerOrder.forEach(p=>{
     const e=g('iqamah-val-'+p);if(!e)return;
     const mins=C.iqamahMinutes[p]??0;
-    // إذا 0 دقيقة → "مباشرة"
+    // صلوات "مباشرة": تُعرض مباشرة في الكارت بغض النظر عن iqamahMinutes الفعلي
+    if((C.iqamahImmediate||[]).includes(p)){ e.textContent='مباشرة'; return; }
     if(mins===0){ e.textContent='مباشرة'; return; }
     if(pTimes[p]&&pTimes[p]!=='--:--'){
       const pts=pTimes[p].split(':');
@@ -502,9 +505,10 @@ function checkTransitions(now){
     const minsToIq=(iqT-ch)*60;
     const diffFromIq=(ch-iqT)*60;
 
-    // لا تُظهر عداد الإقامة إذا الإقامة فورية (0 دقيقة) أو إذا ما أُذِّن بعد (ch < pt)
+    // لا تُظهر عداد الإقامة إذا: الإقامة فورية، قبل الأذان، أو صلاة من نوع "مباشرة"
     const iqMins = C.iqamahMinutes[prayer]||0;
-    if(C.enableIqamahCountdown && iqMins>0 && ch>=pt && minsToIq>=0 && minsToIq<=C.iqamahCountdownMinutes){
+    const isImmediate = (C.iqamahImmediate||[]).includes(prayer);
+    if(C.enableIqamahCountdown && iqMins>0 && !isImmediate && ch>=pt && minsToIq>=0 && minsToIq<=C.iqamahCountdownMinutes){
       const ts=Math.floor(minsToIq*60),tm=Math.floor(ts/60),ts2=ts%60;
       const te=g('iqamahCountdownTimer');if(te)te.textContent=String(tm).padStart(2,'0')+':'+String(ts2).padStart(2,'0');
       if(dkDonePrayer===prayer) dkDonePrayer=null;
@@ -523,7 +527,7 @@ function checkTransitions(now){
     for(const prayer of C.prayerOrder){
       const pt=pRaw[prayer];if(pt===undefined||isNaN(pt)) continue;
       const dm=(ch-pt)*60;
-      if(dm>=0&&dm<2){go(STATE.ADHAN,{prayer});return;}
+      if(dm>=0&&dm<1.5){go(STATE.ADHAN,{prayer});return;} // شاشة الأذان: 1.5 دقيقة
     }
   }
 
