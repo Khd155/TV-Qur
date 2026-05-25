@@ -368,7 +368,8 @@ body { pointer-events: auto !important; }
   line-height: 1.2;
 }
 .card-time {
-  font-size: 2.8vmin;
+  /* يتحجم مع اسم الصلاة تلقائياً */
+  font-size: calc(var(--card-name-size) * 0.88);
   font-weight: 900;
   text-align: center;
   line-height: 1.1;
@@ -378,18 +379,21 @@ body { pointer-events: auto !important; }
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  /* يتضخم تلقائياً مع حجم اسم الصلاة — 55% من حجم الاسم */
-  font-size: calc(var(--card-name-size) * 0.55);
-  color: var(--muted);
-  gap: 0.5vmin;
+  gap: 0.6vmin;
   flex-wrap: nowrap;
-  min-font-size: 1.2vmin;
+  font-size: calc(var(--card-name-size) * 0.62);
+  color: var(--muted);
 }
-.card-iq span:first-child { opacity: 0.6; }
-.card-iq span:last-child  {
+.card-iq span:first-child {
+  opacity: 0.55;
+  font-size: calc(var(--card-name-size) * 0.56);
+}
+.card-iq span:last-child {
   color: var(--gold-lt);
   font-weight: 900;
-  font-size: calc(var(--card-name-size) * 0.65); /* الوقت أكبر من النص */
+  /* وقت الإقامة = 82% من حجم اسم الصلاة — واضح وكبير */
+  font-size: calc(var(--card-name-size) * 0.82);
+  letter-spacing: 0.02em;
 }
 
 /* ===== آية ===== */
@@ -635,8 +639,9 @@ body.night-mode{--bg:#030210;--bg2:#06041A;}
 .two-col.no-media .clk-per   { font-size: clamp(18px, 2.8vmin, 40px); }
 .two-col.no-media .card-ico  { width: clamp(22px, 3.6vmin, 50px); height: clamp(22px, 3.6vmin, 50px); }
 .two-col.no-media .card-name { font-size: var(--card-name-size); font-weight: 600; }
-.two-col.no-media .card-time { font-size: clamp(26px, 4.4vmin, 58px); font-weight: 700; }
-.two-col.no-media .card-iq   { gap: 0.8vw; } /* يرث font-size من .card-iq المرتبط بـ --card-name-size */
+.two-col.no-media .card-time { font-size: calc(var(--card-name-size) * 0.88); font-weight: 700; }
+.two-col.no-media .card-iq   { gap: 0.8vw; }
+.two-col.no-media .card-iq span:last-child { font-size: calc(var(--card-name-size) * 0.82); }
 .two-col.no-media .nb-lbl    { font-size: clamp(15px, 2.2vmin, 30px); }
 .two-col.no-media .nb-name   { font-size: clamp(19px, 3.2vmin, 44px); }
 .two-col.no-media .nb-cd     { font-size: clamp(18px, 3vmin, 42px); }
