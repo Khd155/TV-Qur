@@ -362,7 +362,11 @@ function fmt12(d){
 
 /* ---- الوقت الحالي من الجهاز مباشرة ---- */
 function nowSA(){
-  return new Date();
+  // دائماً UTC+3 (مكة المكرمة) بغض النظر عن ضبط الجهاز
+  // يضمن صحة مواقيت الصلاة حتى لو الجهاز على توقيت مختلف
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utcMs + 3 * 3600000);
 }
 
 function updateClock(){
@@ -498,10 +502,12 @@ function checkTransitions(now){
     const minsToIq=(iqT-ch)*60;
     const diffFromIq=(ch-iqT)*60;
 
-    if(C.enableIqamahCountdown&&minsToIq>=0&&minsToIq<=C.iqamahCountdownMinutes){
+    // لا تُظهر عداد الإقامة إذا الإقامة فورية (0 دقيقة) أو إذا ما أُذِّن بعد (ch < pt)
+    const iqMins = C.iqamahMinutes[prayer]||0;
+    if(C.enableIqamahCountdown && iqMins>0 && ch>=pt && minsToIq>=0 && minsToIq<=C.iqamahCountdownMinutes){
       const ts=Math.floor(minsToIq*60),tm=Math.floor(ts/60),ts2=ts%60;
       const te=g('iqamahCountdownTimer');if(te)te.textContent=String(tm).padStart(2,'0')+':'+String(ts2).padStart(2,'0');
-      if(dkDonePrayer===prayer) dkDonePrayer=null; // reset for next dhikr cycle
+      if(dkDonePrayer===prayer) dkDonePrayer=null;
       go(STATE.IQAMAH_COUNTDOWN,{prayer});return;
     }
     if(C.enablePrayerSilent&&diffFromIq>=0&&diffFromIq<C.blackoutMinutes[prayer]){
